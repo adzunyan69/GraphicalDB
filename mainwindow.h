@@ -2,6 +2,7 @@
 #define MAINWINDOW_H
 
 #include <QMainWindow>
+#include "RideModule/ride.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
@@ -15,7 +16,19 @@ public:
     MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
 
+    void setRegistryInfo(QString pathToReg);
+    void startPathCoordUpdater();
+
 private:
     Ui::MainWindow *ui;
+
+    RideUpdater *pathCoordUpdater = nullptr;
+
+    int km;
+    int m;
+
+private slots:
+    void currentPathCoordUpdate(QString);
+
 };
 #endif // MAINWINDOW_H

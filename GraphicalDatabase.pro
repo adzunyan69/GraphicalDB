@@ -1,5 +1,16 @@
 QT       += core gui
 
+#Application version
+VERSION_MAJOR = 0
+VERSION_MINOR = 1
+VERSION_BUILD = 0 #$$system(version.bat)
+VERSION_BUILD_MINOR = 0
+
+DEFINES += "VERSION_MAJOR=$$VERSION_MAJOR"\
+       "VERSION_MINOR=$$VERSION_MINOR"\
+       "VERSION_BUILD=$$VERSION_BUILD"\
+       "VERSION_BUILD_MINOR=$$VERSION_BUILD_MINOR"
+
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
 CONFIG += c++11
@@ -16,10 +27,12 @@ DEFINES += QT_DEPRECATED_WARNINGS
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 
 SOURCES += \
+    RideModule/ride.cpp \
     main.cpp \
     mainwindow.cpp
 
 HEADERS += \
+    RideModule/ride.h \
     mainwindow.h
 
 FORMS += \
