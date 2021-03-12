@@ -3,6 +3,7 @@
 
 #include <QMainWindow>
 #include "RideModule/ride.h"
+#include "DatabaseAccessModule/databaseaccess.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
