@@ -28,12 +28,14 @@ DEFINES += QT_DEPRECATED_WARNINGS
 
 SOURCES += \
     DatabaseAccessModule/databaseaccess.cpp \
+    DatabaseAccessModule/trackinfo.cpp \
     RideModule/ride.cpp \
     main.cpp \
     mainwindow.cpp
 
 HEADERS += \
     DatabaseAccessModule/databaseaccess.h \
+    DatabaseAccessModule/trackinfo.h \
     RideModule/ride.h \
     mainwindow.h
 

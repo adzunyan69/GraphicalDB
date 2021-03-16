@@ -4,7 +4,7 @@
 #include <QMainWindow>
 #include "RideModule/ride.h"
 #include "DatabaseAccessModule/databaseaccess.h"
-
+#include "DatabaseAccessModule/trackinfo.h"
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
 QT_END_NAMESPACE
@@ -19,6 +19,7 @@ public:
 
     void setRegistryInfo(QString pathToReg);
     void startPathCoordUpdater();
+
 
 private:
     Ui::MainWindow *ui;

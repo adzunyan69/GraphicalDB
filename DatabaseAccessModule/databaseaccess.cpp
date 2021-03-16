@@ -74,7 +74,7 @@ QSqlQuery DatabaseAccess::execQueryStringBind(const QString &query, const QMap<Q
 
     for(auto it = bindValues.begin(); it != bindValues.end(); ++it)
     {
-        qDebug() << "Bind " << it.key() << " with " << it.value().toString();
+        // qDebug() << "Bind " << it.key() << " with " << it.value().toString();
         q.bindValue(it.key(), it.value());
     }
     if(q.exec() != true)
@@ -83,7 +83,7 @@ QSqlQuery DatabaseAccess::execQueryStringBind(const QString &query, const QMap<Q
         qDebug() << error;
     }
 
-    qDebug() << "last query: " << q.lastQuery();
+    // qDebug() << "last query: " << q.lastQuery();
     qDebug() << "last error: " << q.lastError();
 
     return q;
