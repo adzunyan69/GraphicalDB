@@ -1,4 +1,4 @@
-QT       += core gui sql
+QT       += core gui sql printsupport
 
 #Application version
 VERSION_MAJOR = 0
@@ -10,6 +10,7 @@ DEFINES += "VERSION_MAJOR=$$VERSION_MAJOR"\
        "VERSION_MINOR=$$VERSION_MINOR"\
        "VERSION_BUILD=$$VERSION_BUILD"\
        "VERSION_BUILD_MINOR=$$VERSION_BUILD_MINOR"
+
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
@@ -29,6 +30,8 @@ DEFINES += QT_DEPRECATED_WARNINGS
 SOURCES += \
     DatabaseAccessModule/databaseaccess.cpp \
     DatabaseAccessModule/trackinfo.cpp \
+    PlotModule/plot.cpp \
+    PlotModule/qcustomplot/qcustomplot.cpp \
     RideModule/ride.cpp \
     main.cpp \
     mainwindow.cpp
@@ -36,6 +39,8 @@ SOURCES += \
 HEADERS += \
     DatabaseAccessModule/databaseaccess.h \
     DatabaseAccessModule/trackinfo.h \
+    PlotModule/plot.h \
+    PlotModule/qcustomplot/qcustomplot.h \
     RideModule/ride.h \
     mainwindow.h
 

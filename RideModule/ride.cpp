@@ -37,6 +37,7 @@ void RideUpdateWorker::startUpdating()
     timer = new QTimer(this);
     timer->setInterval(1000);
 
+    qDebug() << "Updating";
     connect(timer, SIGNAL(timeout()), this, SLOT(updatePathCoord()));
     timer->start();
 }
@@ -46,6 +47,7 @@ void RideUpdateWorker::updatePathCoord()
     if(registry != nullptr)
         currentPathCoord = registry->value("CurPathCoord").toString();
 
+    qDebug() << currentPathCoord;
     emit currentPathCoordChanged(currentPathCoord);
 }
 

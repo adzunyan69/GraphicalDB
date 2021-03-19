@@ -7,9 +7,10 @@
 
 struct TrackItem
 {
-    enum TrackItemType{ KM, STR, STAN, PCH, MOST, MOV} type;
+    enum TrackItemType{ KM, STR, STAN, PCH, MOST, MOV, CUR, SPD} type;
 
     QString name;
+    int numb;
 
     int km = -1;
     int beginKM = -1;
@@ -19,6 +20,7 @@ struct TrackItem
     int endKM = -1;
     int endM = -1;
     int len = -1;
+
 
     int absBegin;
     int absO;

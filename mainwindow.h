@@ -5,6 +5,8 @@
 #include "RideModule/ride.h"
 #include "DatabaseAccessModule/databaseaccess.h"
 #include "DatabaseAccessModule/trackinfo.h"
+#include "PlotModule/plot.h"
+
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
 QT_END_NAMESPACE
@@ -25,12 +27,16 @@ private:
     Ui::MainWindow *ui;
 
     RideUpdater *pathCoordUpdater = nullptr;
+    Plot plot;
 
     int km;
     int m;
-
+signals:
+    void positionChanged(int newAbsPos);
 private slots:
     void currentPathCoordUpdate(QString);
+public slots:
+    void positionChange();
 
 };
 #endif // MAINWINDOW_H

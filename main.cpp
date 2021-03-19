@@ -28,7 +28,7 @@ int main(int argc, char *argv[])
 
 
     MainWindow w;
-    // w.setRegistryInfo(QString("HKEY_CURRENT_USER\\") + QString(argv[1]));
+    //w.setRegistryInfo(QString("HKEY_CURRENT_USER\\") + QString(argv[1]));
     //w.startPathCoordUpdater();
     w.show();
     return a.exec();

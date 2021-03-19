@@ -15,26 +15,35 @@ MainWindow::MainWindow(QWidget *parent)
     if(trackInfo.setAndOpenDatabase("C:/Users/kruglyakovav/Documents/build-GraphicalDatabase-Desktop_Qt_5_14_2_MinGW_32_bit-Debug/ApBAZE_2021-03-10_0840.db") == false)
         return;
 
-    trackInfo.setAssetNum("110000123030");
-    // trackInfo.setDirInfo("15101", "2");
+    // trackInfo.setAssetNum("110000123030");
+    trackInfo.setDirInfo("14601", "2");
+
+    auto itemsMap = trackInfo.getItemsMap();
+
+    qDebug() << "Full time for getting objects: " << time.msecsTo(QTime::currentTime()) << " ms";
 
 
-    auto map = trackInfo.getItemsMap();
+    time = QTime::currentTime();
 
-    qDebug() << map.value(TrackItem::KM).size() << " "
-             << map.value(TrackItem::STR).size() << " "
-             << map.value(TrackItem::STAN).size() << " "
-             << map.value(TrackItem::PCH).size() << " "
-             << map.value(TrackItem::MOST).size() << " "
-             << map.value(TrackItem::MOV).size();
+    plot.setupPlot(ui->graphicalDatabase);
+    plot.drawObjects(itemsMap);
 
+    qDebug() << "Full time for drawing grapgical database: " << time.msecsTo(QTime::currentTime()) << " ms";
 
-
-
-    qDebug() << "Full time: " << time.msecsTo(QTime::currentTime()) << " ms";
-
+    connect(pathCoordUpdater, SIGNAL(currentPathCoordChanged(QString)), &plot, SLOT(changePosition(QString)));
+    QTimer *timer = new QTimer(this);
+    timer->setInterval(1000);
+    connect(timer, SIGNAL(timeout()), this, SLOT(positionChange()));
+    connect(this, SIGNAL(positionChanged(int)), &plot, SLOT(changePosition(int)));
+    timer->start();
 }
 
+void MainWindow::positionChange()
+{
+    static int pos = 2000;
+    pos += 25;
+    emit positionChanged(pos);
+}
 
 MainWindow::~MainWindow()
 {

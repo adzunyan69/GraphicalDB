@@ -76,6 +76,8 @@ QVector<TrackItem> TrackInfo::getVec(QString sqlName)
             item.type = TrackItem::STR;
             item.beginKM = query.value("B_KM").toInt();
             item.beginM = query.value("B_M").toInt();
+            item.name = query.value("NAME").toString();
+            item.numb = query.value("NUMB").toInt();
         }
         else if(objType == "STN")
         {
@@ -114,6 +116,19 @@ QVector<TrackItem> TrackInfo::getVec(QString sqlName)
             item.endM = query.value("E_M").toInt();
 
         }
+        else if(objType == "CUR")
+        {
+            item.type = TrackItem::CUR;
+            item.beginKM = query.value("B_KM").toInt();
+            item.beginM = query.value("B_M").toInt();
+            item.oKM = query.value("O_KM").toInt();
+            item.oM = query.value("O_M").toInt();
+        }
+        else if(objType == "SPD")
+        {
+            item.type = TrackItem::SPD;
+
+        }
 
         result.push_back(item);
     } while(query.next());
@@ -145,6 +160,10 @@ QMap<TrackItem::TrackItemType, QVector<TrackItem>> TrackInfo::getItemsMap()
     calculateAbsCoord(most, km);
     QVector<TrackItem> mov =  getVec( "/MOV.sql");
     calculateAbsCoord(mov, km);
+    QVector<TrackItem> cur =  getVec( "/CUR.sql");
+    calculateAbsCoord(cur, km);
+    QVector<TrackItem> spd =  getVec( "/SPD.sql");
+    calculateAbsCoord(spd, km);
 
     QTime time = QTime::currentTime();
     itemsMap.insert(TrackItem::KM, km);
@@ -153,6 +172,7 @@ QMap<TrackItem::TrackItemType, QVector<TrackItem>> TrackInfo::getItemsMap()
     itemsMap.insert(TrackItem::PCH, pch);
     itemsMap.insert(TrackItem::MOST, most);
     itemsMap.insert(TrackItem::MOV, mov);
+    itemsMap.insert(TrackItem::CUR, cur);
     qDebug() << "Time for insert: " << time.msecsTo(QTime::currentTime());
     return itemsMap;
 }
@@ -192,7 +212,7 @@ void TrackInfo::calculateAbsCoord(QVector<TrackItem> &trackItems, QVector<TrackI
         for(auto it = trackItems.begin(); it != trackItems.end(); ++it)
         {
             it->absBegin = getAbsCoord(km, it->beginKM, it->beginM);
-            it->absO = getAbsCoord(km, it->oKM, it->oKM);
+            it->absO = getAbsCoord(km, it->oKM, it->oM);
             it->absEnd = getAbsCoord(km, it->endKM, it->endM);
              //qDebug() << "Stan: " << it->name << "; Begin" << it->beginKM << "km " << it->beginM << "m; " << "Os: " << it->oKM << " km " << it->oM << "m; End: " << it->endKM << " km " << it->endM << " m; "
              //       << " Abs Begin: " << it->absBegin << "; Abs Os: " << it->absO << "; Abs End: " << it->absEnd;
@@ -226,6 +246,15 @@ void TrackInfo::calculateAbsCoord(QVector<TrackItem> &trackItems, QVector<TrackI
             it->absEnd = getAbsCoord(km, it->endKM, it->endM);
             //qDebug() << "Mov: Begin" << it->beginKM << "km " << it->beginM << "m; End: " << it->endKM << " km " << it->endM << " m; "
              //        << " Abs Begin: " << it->absBegin  << "; Abs End: " << it->absEnd;
+        }
+    }
+    else if(trackItems.first().type == TrackItem::CUR)
+    {
+        for(auto it = trackItems.begin(); it != trackItems.end(); ++it)
+        {
+            it->absBegin = getAbsCoord(km, it->beginKM, it->beginM);
+            // qDebug() << "Cur: Begin" << it->beginKM << "km " << it->beginM << "m;"
+            //         << " Abs Begin: " << it->absBegin;
         }
     }
     qDebug() << "Time: " << time.msecsTo(QTime::currentTime());
