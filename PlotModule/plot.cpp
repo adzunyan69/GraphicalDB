@@ -548,7 +548,7 @@ void Plot::checkPCH(int absPos)
 void Plot::checkDistance(int absPos)
 {
     QString distance;
-    for(auto it = stanVec.begin(); it != stanVec.end() - 1; ++it)
+    for(auto it = stanVec.begin(); it != stanVec.end(); ++it)
     {
         if(absPos >= it->absBegin && absPos <= it->absEnd)
             distance = it->name;
