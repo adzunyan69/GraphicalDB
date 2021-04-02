@@ -4,19 +4,26 @@ DatabaseAccess::DatabaseAccess(QObject *parent) : QObject(parent)
 {
     db = QSqlDatabase::database();
     if(db.isValid() == false)
+    {
+        qDebug() << "Add database SQLITE";
         db = QSqlDatabase::addDatabase("QSQLITE");
+    }
 
 }
 
 DatabaseAccess::~DatabaseAccess()
 {
+    qDebug() << "Closing database";
     db.close();
 }
 
 bool DatabaseAccess::openDatabase(QString databasePath)
 {
     if(db.isValid() == false)
+    {
+        qDebug() << "Database is not valid";
         return false;
+    }
 
     db.setDatabaseName(databasePath);
     return db.open();
@@ -52,6 +59,7 @@ QSqlQuery DatabaseAccess::execQueryFile(const QString &filePath)
     if(queryFile.exists() != true)
     {
         qDebug() << "Error: file does not exist";
+        qDebug() << filePath;
         return QSqlQuery();
     }
 
@@ -102,6 +110,7 @@ QSqlQuery DatabaseAccess::execQueryFileBind(const QString filePath, const QMap<Q
     if(queryFile.exists() != true)
     {
         qDebug() << "Error: file does not exist";
+        qDebug() << filePath;
         return QSqlQuery();
     }
 

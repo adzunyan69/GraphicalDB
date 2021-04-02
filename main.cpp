@@ -5,39 +5,66 @@
 #include <QDateTime>
 #include <QDir>
 #include <QFile>
-
 void myMessageHandler(QtMsgType type, const QMessageLogContext& context, const QString &msg);
-
+void logMessageBeforeStartup(QString msg);
 int main(int argc, char *argv[])
 {
     QApplication a(argc, argv);
     qInstallMessageHandler(myMessageHandler);
 
+    logMessageBeforeStartup(QString::number(argc));
+    for(int i = 0; i < argc; i++)
+    {
+        logMessageBeforeStartup(QString(argv[i]));
+    }
 
     if(argc != 2 || !argv[1])
     {
-        qDebug() << "Usage; program <path to reg>";
+        logMessageBeforeStartup("Usage; program <path to reg>");
+        qDebug() << "Usage: program <path to reg>";
         return 1;
     }
 
     if(strstr(argv[1], "Software") != argv[1])
     {
+        logMessageBeforeStartup("Invalid path to registry");
         qDebug() << "Invalid path to registry";
         return 1;
     }
 
+    logMessageBeforeStartup("Argv is ok");
+
 
     MainWindow w;
-    //w.setRegistryInfo(QString("HKEY_CURRENT_USER\\") + QString(argv[1]));
-    //w.startPathCoordUpdater();
+
+    w.setRegistryInfo(QString("HKEY_CURRENT_USER\\") + QString(argv[1]));
+    w.drawPlot();
+    w.startPathCoordUpdater();
     w.show();
     return a.exec();
 }
 
 
+void logMessageBeforeStartup(QString msg)
+{
+    QFile outFile(QApplication::applicationDirPath() + "\\log\\" + QString("%1/log-%2.log").arg(".").arg(QDate::currentDate().toString("yy.MM.dd")));
+    outFile.open(QIODevice::WriteOnly | QIODevice::Append);
+    QDateTime dateTime = QDateTime::currentDateTime();
+    msg=QString("%1: %3").arg(dateTime.toString(Qt::ISODate)).arg(msg);
+
+    if(!QDir().exists(QApplication::applicationDirPath() + "\\log\\"))
+    {
+        QDir().mkpath(QApplication::applicationDirPath() + "\\log\\");
+    }
+    QTextStream ts(&outFile);
+    // txt = cp1251->toUnicode(txt.toUtf8());
+    ts << msg << endl;
+    outFile.close();
+}
+
 void myMessageHandler(QtMsgType type, const QMessageLogContext& context, const QString &msg)
 {
-    // static QTextCodec *cp1251 = QTextCodec::codecForName("CP1251");
+    static QTextCodec *cp1251 = QTextCodec::codecForName("CP1251");
     QString txt;
     static long long uid=0; //-- номеруем вывод
     //-- название функции с классом, берём только класс и саму функцию
@@ -77,7 +104,7 @@ void myMessageHandler(QtMsgType type, const QMessageLogContext& context, const Q
     QFile outFile(QApplication::applicationDirPath() + "\\log\\" + QString("%1/log-%2.log").arg(".").arg(QDate::currentDate().toString("yy.MM.dd")));
     outFile.open(QIODevice::WriteOnly | QIODevice::Append);
     QTextStream ts(&outFile);
-    // txt = cp1251->toUnicode(txt.toUtf8());
+    txt = cp1251->toUnicode(txt.toUtf8());
     ts << txt << endl;
     outFile.close();
 

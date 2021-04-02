@@ -1,4 +1,4 @@
-QT       += core gui sql printsupport
+QT       += core gui sql printsupport xml
 
 #Application version
 VERSION_MAJOR = 0
@@ -12,6 +12,7 @@ DEFINES += "VERSION_MAJOR=$$VERSION_MAJOR"\
        "VERSION_BUILD_MINOR=$$VERSION_BUILD_MINOR"
 
 
+ DEFINES += QCUSTOMPLOT_USE_OPENGL
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
 CONFIG += c++11
@@ -32,6 +33,7 @@ SOURCES += \
     DatabaseAccessModule/trackinfo.cpp \
     PlotModule/plot.cpp \
     PlotModule/qcustomplot/qcustomplot.cpp \
+    RideModule/ataperegistrationchecker.cpp \
     RideModule/ride.cpp \
     main.cpp \
     mainwindow.cpp
@@ -41,9 +43,10 @@ HEADERS += \
     DatabaseAccessModule/trackinfo.h \
     PlotModule/plot.h \
     PlotModule/qcustomplot/qcustomplot.h \
+    RideModule/ataperegistrationchecker.h \
     RideModule/ride.h \
     mainwindow.h
-
+LIBS += -lglu32 -lopengl32
 FORMS += \
     mainwindow.ui
 

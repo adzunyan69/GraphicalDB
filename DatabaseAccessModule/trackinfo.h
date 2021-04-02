@@ -26,6 +26,11 @@ struct TrackItem
     int absO;
     int absEnd;
 
+    bool operator<(const TrackItem &rhs)
+    {
+        return (this->beginKM < rhs.beginKM || (this->beginKM == rhs.beginKM) && this->beginM < rhs.beginM);
+    }
+
 };
 
 class TrackInfo : public QObject
@@ -34,6 +39,8 @@ class TrackInfo : public QObject
 
     DatabaseAccess dba;
 
+    QString sqlPath;
+
     QString assetNum;
 
     QString dirCode;
@@ -41,9 +48,11 @@ class TrackInfo : public QObject
 public:
     explicit TrackInfo(QObject *parent = nullptr);
 
-    bool setAndOpenDatabase(QString databaseName);
+    bool setAndOpenDatabase(QString databaseName, QString _sqlPath);
     void setAssetNum(QString _assetNum);
     void setDirInfo(QString _dirCode, QString _trackNum) { dirCode = _dirCode, trackNum = _trackNum; }
+    QString getDirCode() { return dirCode; }
+    QString getTrackNum() { return trackNum; }
     QVector<TrackItem> getVec(QString sqlName);
 
     QMap<TrackItem::TrackItemType, QVector<TrackItem>> getItemsMap();

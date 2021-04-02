@@ -5,6 +5,7 @@
 #include <QSettings>
 #include <QDebug>
 #include <QTimer>
+#include "ataperegistrationchecker.h"
 
 struct RideInfo
 {
@@ -47,10 +48,13 @@ private:
     QString registryPath;
     QSettings *registry = nullptr;
 
+
     RideInfo rideInfo;
     QTimer *timer = nullptr;
 
     QString currentPathCoord;
+
+    void parseRegInfoToRideInfo(ATapeRegistrationInfo &regInfo);
 public:
     explicit RideUpdateWorker(QObject *parent = nullptr);
     ~RideUpdateWorker();

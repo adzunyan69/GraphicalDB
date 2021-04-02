@@ -7,15 +7,24 @@ RideUpdateWorker::RideUpdateWorker(QObject *parent) : RideUpdater(parent)
 
 void RideUpdateWorker::setRegistryPathAndRideInfo(QString _registryPath)
 {
+    qDebug() << "Registry path: " << _registryPath;
     registryPath = _registryPath;
-    registry = new QSettings(registryPath, QSettings::Registry64Format, this);
+    registry = new QSettings(registryPath, QSettings::Registry32Format, this);
 
     qDebug() << "Registry path: " << registryPath;
 
-    rideInfo.directionCode = "1234";
-    rideInfo.trackCode = "123";
-    rideInfo.trackNumber = "12345";
-    rideInfo.increase = false;
+    ATapeRegistrationChecker atape;
+    atape.setPathToPassport(registry->value("PassportPath").toString());
+    atape.parsePassport();
+    parseRegInfoToRideInfo(atape.getRegInfo());
+
+}
+
+void RideUpdateWorker::parseRegInfoToRideInfo(ATapeRegistrationInfo &regInfo)
+{
+    rideInfo.trackCode = regInfo.TRACK_CODE;
+    rideInfo.increase = regInfo.INCREASE == "1" ? true : false;
+    qDebug() << "Parse reg info: " << rideInfo.trackCode << " / " << rideInfo.increase;
 }
 
 RideInfo RideUpdateWorker::getRideInfo()
@@ -24,13 +33,17 @@ RideInfo RideUpdateWorker::getRideInfo()
     {
         qDebug() << "Registry exist";
     }
-
+    else
+    {
+        qDebug() << "Registry ERROR";
+    }
     return rideInfo;
 
 }
 
 void RideUpdateWorker::startUpdating()
 {
+    qDebug() << "Start updating";
     if(timer != nullptr)
         delete timer;
 
@@ -47,7 +60,7 @@ void RideUpdateWorker::updatePathCoord()
     if(registry != nullptr)
         currentPathCoord = registry->value("CurPathCoord").toString();
 
-    qDebug() << currentPathCoord;
+    // qDebug() << currentPathCoord;
     emit currentPathCoordChanged(currentPathCoord);
 }
 
