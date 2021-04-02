@@ -16,13 +16,30 @@ void TrackInfo::setAssetNum(QString _assetNum)
     bindValue.insert(":ASSET_NUM", _assetNum);
 
 
-    QSqlQuery query = dba.execQueryFileBind(sqlPath + "ASSETNUM.sql",
+    QSqlQuery query = dba.execQueryFileBind(sqlPath + "/ASSETNUM.sql",
                                             bindValue);
 
     query.first();
     setDirInfo(query.value("KOD").toString(), query.value("PUT").toString());
 
     qDebug() << dirCode << " " << trackNum;
+}
+
+void TrackInfo::setDirInfo(QString _dirCode, QString _trackNum)
+{
+    dirCode = _dirCode;
+    trackNum = _trackNum;
+
+    QMap<QString, QVariant> bindValue;
+    bindValue.insert(":DIR_CODE", dirCode);
+    QSqlQuery query = dba.execQueryFileBind(sqlPath + "/WAY.sql", bindValue);
+    if(query.first() == false)
+    {
+        qDebug() << "Error while getting dirName";
+        qDebug() << query.lastError();
+    }
+
+    dirName = query.value("NAME").toString();
 }
 
 bool TrackInfo::setAndOpenDatabase(QString databaseName, QString _sqlPath)

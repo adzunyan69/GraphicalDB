@@ -38,39 +38,42 @@ void MainWindow::setWindowsWidgets()
     spdLabel = new QLabel(this);
     pchLabel = new QLabel(this);
     coordLabel = new QLabel(this);
+    distanceLabel = new QLabel(this);
     spdLabel->setText("spdLabel");
     spdLabel->setMinimumWidth(150);
     pchLabel->setText("pchLabel");
     pchLabel->setMinimumWidth(50);
     coordLabel->setText("coordLabel");
     coordLabel->setMinimumWidth(150);
+    distanceLabel->setText("distanceLabel");
+    distanceLabel->setMinimumWidth(150);
     ui->statusbar->addWidget(spdLabel);
     ui->statusbar->addWidget(pchLabel);
     ui->statusbar->addWidget(coordLabel);
+    ui->statusbar->addWidget(distanceLabel);
 }
 
 void MainWindow::connectObjects()
 {
 #ifdef ATAPE_MODE
     connect(pathCoordUpdater, SIGNAL(currentPathCoordChanged(QString)), &plot, SLOT(changePosition(QString)));
-    // connect(pathCoordUpdater, SIGNAL(currentPathCoordChanged(QString)), this, SLOT(coordChange(QString)));
-    connect(&plot, SIGNAL(spdChanged(QString)), this, SLOT(spdChange(QString)));
-    connect(&plot, SIGNAL(pchChanged(QString)), this, SLOT(pchChange(QString)));
 #else
     QTimer *timer = new QTimer(this);
     timer->setInterval(1000);
     connect(timer, SIGNAL(timeout()), this, SLOT(positionChange()));
     connect(this, SIGNAL(positionChanged(int)), &plot, SLOT(changePosition(int)));
     connect(this, SIGNAL(positionChanged(int)), this, SLOT(coordChange(int)));
-    connect(&plot, SIGNAL(spdChanged(QString)), this, SLOT(spdChange(QString)));
-    connect(&plot, SIGNAL(pchChanged(QString)), this, SLOT(pchChange(QString)));
     timer->start();
 #endif
+    connect(&plot, SIGNAL(spdChanged(QString)), this, SLOT(spdChange(QString)));
+    connect(&plot, SIGNAL(pchChanged(QString)), this, SLOT(pchChange(QString)));
+    connect(&plot, SIGNAL(distanceChanged(QString)), this, SLOT(distanceChange(QString)));
 }
 
 void MainWindow::drawPlot()
 {
     getItemsMap();
+
     qDebug() << "Drawing plot";
     QTime time = QTime::currentTime();
     plot.drawObjects(itemsMap);
@@ -100,20 +103,21 @@ void MainWindow::getItemsMap()
 #ifdef ATAPE_MODE
     qDebug() << "RegInfo: " << pathCoordUpdater->getRideInfo().toString();
     trackInfo.setAssetNum(pathCoordUpdater->getRideInfo().trackCode);
-    this->setWindowTitle(trackInfo.getDirCode() + " - " + trackInfo.getTrackNum());
     plot.setReversed(!pathCoordUpdater->getRideInfo().increase);
 #else
     // trackInfo.setAssetNum("110000123030");
     trackInfo.setDirInfo("14601", "2");
+    // plot.setReversed(true);
 #endif
     itemsMap = trackInfo.getItemsMap();
+    this->setWindowTitle(trackInfo.getDirCode() + " - " + trackInfo.getTrackNum() + ", " + trackInfo.getDirName());
 
     qDebug() << "Full time for getting objects: " << time.msecsTo(QTime::currentTime()) << " ms";
 }
 
 void MainWindow::positionChange()
 {
-    static int pos = 2000;
+    static int pos = -100;
     pos += 50;
     emit positionChanged(pos);
 }
@@ -121,29 +125,25 @@ void MainWindow::positionChange()
 void MainWindow::spdChange(QString spd)
 {
     qDebug() << "spdChange: " << spd;
-    spdLabel->setText(spd);
+    spdLabel->setText("Скорости;Скорости ВСК: " + spd);
 }
 
 void MainWindow::pchChange(QString pch)
 {
     qDebug() << "pchChange: " << pch;
-    pchLabel->setText(pch);
+    pchLabel->setText("Дистанция пути: " + pch);
 }
 
-void MainWindow::coordChange(QString coord)
-{
-    QStringList coordSplitted = coord.split(';');
-    // coordLabel->setText(coord);
-    if(coordSplitted.size() == 2)
-        coordLabel->setText(coordSplitted.at(0) + " км " + QString::number(coordSplitted.at(1).toInt()/1000) + " м");
-    else
-        coordLabel->setText("Ошибка чтения координаты");
-    // coordLabel->setText(coord.split(';').first() + " км " + coord.split(';').at(1) + " м ");
-}
 
 void MainWindow::coordChange(int coord)
 {
-    coordLabel->setText("AbsCoord: " + QString::number(coord));
+    coordLabel->setText("Абсолютная координата: " + QString::number(coord));
+}
+
+void MainWindow::distanceChange(QString distance)
+{
+    qDebug() << "distance change: " << distance;
+    distanceLabel->setText("Перегон: " + distance);
 }
 
 MainWindow::~MainWindow()

@@ -82,6 +82,7 @@ void Plot::drawObjects(QMap<TrackItem::TrackItemType, QVector<TrackItem>> &items
     kmVec = itemsMap[TrackItem::KM];
     pchVec = itemsMap[TrackItem::PCH];
     spdVec = itemsMap[TrackItem::SPD];
+    stanVec = itemsMap[TrackItem::STAN];
 
     const QVector<TrackItem> &km = itemsMap[TrackItem::KM];
 
@@ -484,6 +485,7 @@ void Plot::changePosition(int absPos)
 
     checkSPD(absPos);
     checkPCH(absPos);
+    checkDistance(absPos);
 }
 
 
@@ -542,6 +544,35 @@ void Plot::checkPCH(int absPos)
         emit pchChanged(currentPCH);
     }
 }
+
+void Plot::checkDistance(int absPos)
+{
+    QString distance;
+    for(auto it = stanVec.begin(); it != stanVec.end() - 1; ++it)
+    {
+        if(absPos >= it->absBegin && absPos <= it->absEnd)
+            distance = it->name;
+        else if(reversed == false && it != stanVec.end())
+        {
+            if(absPos > it->absEnd && absPos < (it + 1)->absBegin)
+                distance = it->name + " - " + (it + 1)->name;
+        }
+        else if(reversed == true && it != stanVec.begin())
+        {
+            if(absPos < it->absBegin && absPos > (it - 1)->absEnd)
+                distance = it->name + " - " + (it - 1)->name;
+        }
+        else
+            distance = " - ";
+    }
+
+    if(distance != currentDistance)
+    {
+        currentDistance = distance;
+        emit distanceChanged(currentDistance);
+    }
+}
+
 int Plot::getAbsCoord(int pathKm, int pathM)
 {
     int absCoord = -1;

@@ -45,14 +45,16 @@ class TrackInfo : public QObject
 
     QString dirCode;
     QString trackNum;
+    QString dirName;
 public:
     explicit TrackInfo(QObject *parent = nullptr);
 
     bool setAndOpenDatabase(QString databaseName, QString _sqlPath);
     void setAssetNum(QString _assetNum);
-    void setDirInfo(QString _dirCode, QString _trackNum) { dirCode = _dirCode, trackNum = _trackNum; }
+    void setDirInfo(QString _dirCode, QString _trackNum);
     QString getDirCode() { return dirCode; }
     QString getTrackNum() { return trackNum; }
+    QString getDirName() { return dirName; }
     QVector<TrackItem> getVec(QString sqlName);
 
     QMap<TrackItem::TrackItemType, QVector<TrackItem>> getItemsMap();

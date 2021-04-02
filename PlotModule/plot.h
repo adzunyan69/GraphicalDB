@@ -28,9 +28,11 @@ class Plot : public QObject
     QVector<TrackItem> kmVec;
     QVector<TrackItem> pchVec;
     QVector<TrackItem> spdVec;
+    QVector<TrackItem> stanVec;
 
     QString currentSPD;
     QString currentPCH;
+    QString currentDistance;
 
     // QMap<TrackItem::TrackItemType, QVector<TrackItem>> &itemsMap = QMap<TrackItem::TrackItemType, QVector<TrackItem>>();
 
@@ -71,6 +73,7 @@ class Plot : public QObject
 
     void checkSPD(int absPos);
     void checkPCH(int absPos);
+    void checkDistance(int absPos);
     int getAbsCoord(int pathKm, int pathM);
 public:
     explicit Plot(QObject *parent = nullptr);
@@ -82,6 +85,7 @@ public:
 signals:
     void spdChanged(QString newSPD);
     void pchChanged(QString newPCH);
+    void distanceChanged(QString newDistance);
 
 public slots:
     void changePosition(int absPos);

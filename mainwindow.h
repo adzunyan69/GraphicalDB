@@ -30,6 +30,7 @@ private:
     QLabel *spdLabel;
     QLabel *pchLabel;
     QLabel *coordLabel;
+    QLabel *distanceLabel;
 
     RideUpdater *pathCoordUpdater = nullptr;
     Plot plot;
@@ -51,7 +52,7 @@ public slots:
     void positionChange();
     void spdChange(QString);
     void pchChange(QString);
-    void coordChange(QString);
+    void distanceChange(QString);
     void coordChange(int);
 
 };
