@@ -77,7 +77,11 @@ QVector<TrackItem> TrackInfo::getVec(QString sqlName)
     QSqlQuery query = dba.execQueryFileBind(sqlPath +
                                             sqlName, bindValue);
 
-    query.first();
+    if(query.first() == false)
+    {
+        qDebug() << sqlName << " - нет данных";
+        return QVector<TrackItem>();
+    }
     do
     {
         TrackItem item;
@@ -221,6 +225,7 @@ QMap<TrackItem::TrackItemType, QVector<TrackItem>> TrackInfo::getItemsMap()
 
 void TrackInfo::calculateAbsCoordForKm(QVector<TrackItem> &km)
 {
+
     QTime time = QTime::currentTime();
     qDebug() << "Calculate Abs Coord For Km";
 
@@ -238,6 +243,11 @@ void TrackInfo::calculateAbsCoordForKm(QVector<TrackItem> &km)
 
 void TrackInfo::calculateAbsCoord(QVector<TrackItem> &trackItems, QVector<TrackItem> &km)
 {
+    if(trackItems.isEmpty())
+    {
+        qDebug() << "Нет данных для вычисления абсолютной координаты";
+        return;
+    }
     qDebug() << "Calculate Abs Coord";
     QTime time = QTime::currentTime();
     if(trackItems.first().type == TrackItem::STR)

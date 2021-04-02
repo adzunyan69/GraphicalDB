@@ -1,7 +1,7 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 
-#define ATAPE_MODE
+// #define ATAPE_MODE
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -105,8 +105,10 @@ void MainWindow::getItemsMap()
     trackInfo.setAssetNum(pathCoordUpdater->getRideInfo().trackCode);
     plot.setReversed(!pathCoordUpdater->getRideInfo().increase);
 #else
-    // trackInfo.setAssetNum("110000123030");
-    trackInfo.setDirInfo("14601", "2");
+     // trackInfo.setAssetNum("110000123030");110000122929
+    // trackInfo.setAssetNum("110000122929");VALUE="A5284454"/>
+    trackInfo.setAssetNum("A5284454");
+    //trackInfo.setDirInfo("14601", "2");
     // plot.setReversed(true);
 #endif
     itemsMap = trackInfo.getItemsMap();
