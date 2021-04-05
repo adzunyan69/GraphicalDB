@@ -55,6 +55,10 @@ signals:
 private slots:
     void currentPathCoordUpdate(QString);
 public slots:
+    void slotCustomMenuRequested(QPoint pos);
+    void slotOnTopToggle(bool isOnTop);
+
+
     void positionChange();
     void spdChange(QString);
     void pchChange(QString);

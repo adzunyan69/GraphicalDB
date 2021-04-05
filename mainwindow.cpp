@@ -18,6 +18,35 @@ MainWindow::MainWindow(QWidget *parent)
     plot.setupPlot(ui->graphicalDatabase);
 
     connectObjects();
+
+
+    ui->graphicalDatabase->setContextMenuPolicy(Qt::CustomContextMenu);
+    connect(ui->graphicalDatabase, SIGNAL(customContextMenuRequested(QPoint)), this, SLOT(slotCustomMenuRequested(QPoint)));
+}
+
+void MainWindow::slotCustomMenuRequested(QPoint pos)
+{
+    qDebug() << "Context menu requested.";
+    QMenu* menu = new QMenu(this);
+    QAction* onTopToggle = new QAction("Поверх всех окон", menu);
+    onTopToggle->setCheckable(true);
+    onTopToggle->setChecked(settings.read(Settings::WINDOW_ON_TOP, "WindowSettings").toBool());
+    connect(onTopToggle, SIGNAL(toggled(bool)), this, SLOT(slotOnTopToggle(bool)));
+    menu->addAction(onTopToggle);
+    menu->popup(this->mapToGlobal(pos));
+}
+
+void MainWindow::slotOnTopToggle(bool isOnTop)
+{
+    qDebug() << "slotOnTopToggle";
+    settings.write(Settings::WINDOW_ON_TOP, isOnTop, "WindowSettings");
+
+    if(isOnTop == true)
+        this->setWindowFlags(this->windowFlags() | Qt::WindowStaysOnTopHint);
+    else
+        this->setWindowFlags(this->windowFlags() & ~Qt::WindowStaysOnTopHint);
+
+    show();
 }
 
 void MainWindow::closeEvent(QCloseEvent *event)
