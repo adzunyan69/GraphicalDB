@@ -6,6 +6,7 @@
 #include "DatabaseAccessModule/databaseaccess.h"
 #include "DatabaseAccessModule/trackinfo.h"
 #include "PlotModule/plot.h"
+#include "settings.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
@@ -34,16 +35,21 @@ private:
 
     RideUpdater *pathCoordUpdater = nullptr;
     Plot plot;
+    Settings settings;
 
     int km;
     int m;
 
     QMap<TrackItem::TrackItemType, QVector<TrackItem>> itemsMap;
 
+    void setupWindow();
+    void createDefaultSettings();
     void setWindowGeometry();
     void setWindowsWidgets();
     void connectObjects();
     void getItemsMap();
+
+    void closeEvent(QCloseEvent *event);
 signals:
     void positionChanged(int newAbsPos);
 private slots:

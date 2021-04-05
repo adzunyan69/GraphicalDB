@@ -36,7 +36,8 @@ SOURCES += \
     RideModule/ataperegistrationchecker.cpp \
     RideModule/ride.cpp \
     main.cpp \
-    mainwindow.cpp
+    mainwindow.cpp \
+    settings.cpp
 
 HEADERS += \
     DatabaseAccessModule/databaseaccess.h \
@@ -45,7 +46,8 @@ HEADERS += \
     PlotModule/qcustomplot/qcustomplot.h \
     RideModule/ataperegistrationchecker.h \
     RideModule/ride.h \
-    mainwindow.h
+    mainwindow.h \
+    settings.h
 LIBS += -lglu32 -lopengl32
 FORMS += \
     mainwindow.ui

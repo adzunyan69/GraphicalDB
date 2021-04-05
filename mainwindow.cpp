@@ -9,8 +9,7 @@ MainWindow::MainWindow(QWidget *parent)
 {
     ui->setupUi(this);
 
-    setWindowGeometry();
-    setWindowsWidgets();
+    setupWindow();
 
     qDebug() << "Start pathCoordUpdater";
     pathCoordUpdater = new RideUpdateWorker(this);
@@ -21,15 +20,63 @@ MainWindow::MainWindow(QWidget *parent)
     connectObjects();
 }
 
+void MainWindow::closeEvent(QCloseEvent *event)
+{
+    settings.write(Settings::WINDOW_WIDTH, this->width(), "WindowSettings");
+    settings.write(Settings::WINDOW_HEIGHT, this->height(), "WindowSettings");
+    settings.write(Settings::WINDOW_Y_POSITION, this->y(), "WindowSettings");
+    settings.write(Settings::WINDOW_X_POSITION, this->x(), "WindowSettings");
+
+    event->accept();
+}
+
+void MainWindow::setupWindow()
+{
+    if(settings.isFirstRun())
+        createDefaultSettings();
+    setWindowGeometry();
+    setWindowsWidgets();
+
+}
+
+void MainWindow::createDefaultSettings()
+{
+    QRect screenGeometry = QGuiApplication::screens().first()->availableGeometry();
+    settings.write(Settings::WINDOW_ON_TOP, "false", "WindowSettings");
+    settings.write(Settings::WINDOW_WIDTH, screenGeometry.width(), "WindowSettings");
+    settings.write(Settings::WINDOW_HEIGHT, 253, "WindowSettings");
+    settings.write(Settings::WINDOW_Y_POSITION, screenGeometry.height() - this->height() - ui->statusbar->height(), "WindowSettings");
+    settings.write(Settings::WINDOW_X_POSITION, 0, "WindowSettings");
+}
+
 void MainWindow::setWindowGeometry()
 {
     qDebug() << "MainWindow()";
-    QRect screenGeometry = QGuiApplication::screens().first()->availableGeometry();
-    int yWindowPosition = screenGeometry.height() - this->height() - ui->statusbar->height();
-    qDebug() << yWindowPosition;
-    this->move(0, yWindowPosition);
-    this->setFixedWidth(screenGeometry.width());
-    this->setWindowFlag(Qt::WindowStaysOnTopHint);
+
+    if(settings.read(Settings::WINDOW_ON_TOP, "WindowSettings").toString() == "true")
+        this->setWindowFlag(Qt::WindowStaysOnTopHint);
+
+    QVariant width = settings.read(Settings::WINDOW_WIDTH, "WindowSettings");
+    QVariant height = settings.read(Settings::WINDOW_HEIGHT, "WindowSettings");
+    QVariant yPosition = settings.read(Settings::WINDOW_Y_POSITION, "WindowSettings");
+    QVariant xPosition = settings.read(Settings::WINDOW_X_POSITION, "WindowSettings");
+    if(width.isValid() && height.isValid() && yPosition.isValid() && xPosition.isValid())
+    {
+        bool wOk = false, hOk = false, yOk = false, xOk = false;
+        int w = width.toInt(&wOk), h = height.toInt(&hOk), y = yPosition.toInt(&yOk), x = xPosition.toInt(&xOk);
+        if(wOk && hOk && yOk && xOk)
+        {
+            this->resize(w, h);
+            this->setFixedHeight(h);
+            this->move(x, y);
+        }
+        else
+            qDebug() << "Error: converting from QVariant to Int (geometry).";
+    }
+    else
+        qDebug() << "Error: reading geometry settings.";
+
+
     qDebug() << "Window geometry " << this->geometry();
 }
 
