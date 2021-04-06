@@ -55,6 +55,7 @@ QSqlQuery DatabaseAccess::execQueryFile(const QString &filePath)
     if(DBExist() == false)
         return QSqlQuery();
 
+    qDebug() << "Sql file path: " << filePath;
     QFile queryFile(filePath);
     if(queryFile.exists() != true)
     {
@@ -106,6 +107,7 @@ QSqlQuery DatabaseAccess::execQueryFileBind(const QString filePath, const QMap<Q
     if(DBExist() == false)
         return QSqlQuery();
 
+    qDebug() << "Sql file path: " << filePath;
     QFile queryFile(filePath);
     if(queryFile.exists() != true)
     {

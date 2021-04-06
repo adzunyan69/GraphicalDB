@@ -16,6 +16,7 @@ void TrackInfo::setAssetNum(QString _assetNum)
     bindValue.insert(":ASSET_NUM", _assetNum);
 
 
+
     QSqlQuery query = dba.execQueryFileBind(sqlPath + "/ASSETNUM.sql",
                                             bindValue);
 
@@ -60,6 +61,7 @@ QVector<TrackItem> TrackInfo::getVec(QString sqlName)
     QTime time = QTime::currentTime();
     QVector<TrackItem> result;
     QMap<QString, QVariant> bindValue;
+    qDebug() << "Sql path: " << sqlName;
     if(dirCode.isEmpty() && trackNum.isEmpty())
     {
         qDebug() << "dir Code && track Num is empty";
@@ -276,8 +278,8 @@ void TrackInfo::calculateAbsCoord(QVector<TrackItem> &trackItems, QVector<TrackI
         {
             it->absBegin = getAbsCoord(km, it->beginKM, it->beginM);
             it->absEnd = getAbsCoord(km, it->endKM, it->endM);
-            qDebug() << "Pch: Begin" << it->beginKM << "km " << it->beginM << "m; End: " << it->endKM << " km " << it->endM << " m; "
-                     << " Abs Begin: " << it->absBegin  << "; Abs End: " << it->absEnd;
+            // qDebug() << "Pch: Begin" << it->beginKM << "km " << it->beginM << "m; End: " << it->endKM << " km " << it->endM << " m; "
+            //         << " Abs Begin: " << it->absBegin  << "; Abs End: " << it->absEnd;
         }
     }
     else if(trackItems.first().type == TrackItem::MOST)

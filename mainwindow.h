@@ -52,11 +52,13 @@ private:
     void closeEvent(QCloseEvent *event);
 signals:
     void positionChanged(int newAbsPos);
+    void windowFocusChanged(bool isWindowOnFocus);
 private slots:
     void currentPathCoordUpdate(QString);
 public slots:
     void slotCustomMenuRequested(QPoint pos);
     void slotOnTopToggle(bool isOnTop);
+    void focusChanged(QWidget* old, QWidget* now);
 
 
     void positionChange();

@@ -16,7 +16,9 @@ public:
                  WINDOW_WIDTH,
                  WINDOW_HEIGHT,
                  WINDOW_Y_POSITION,
-                 WINDOW_X_POSITION};
+                 WINDOW_X_POSITION,
+
+                 DATABASE_PATH};
 
 private:
     QMap<parametr, QString> settingsMap;

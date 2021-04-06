@@ -1,12 +1,14 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 
-// #define ATAPE_MODE
+#define ATAPE_MODE
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::MainWindow)
 {
+    using namespace std;
+
     ui->setupUi(this);
 
     setupWindow();
@@ -20,8 +22,6 @@ MainWindow::MainWindow(QWidget *parent)
     connectObjects();
 
 
-    ui->graphicalDatabase->setContextMenuPolicy(Qt::CustomContextMenu);
-    connect(ui->graphicalDatabase, SIGNAL(customContextMenuRequested(QPoint)), this, SLOT(slotCustomMenuRequested(QPoint)));
 }
 
 void MainWindow::slotCustomMenuRequested(QPoint pos)
@@ -47,6 +47,15 @@ void MainWindow::slotOnTopToggle(bool isOnTop)
         this->setWindowFlags(this->windowFlags() & ~Qt::WindowStaysOnTopHint);
 
     show();
+}
+
+void MainWindow::focusChanged(QWidget* old, QWidget* now)
+{
+    qDebug() << "Focus changed from " << old << " to " << now;
+    if(now == nullptr)
+        emit windowFocusChanged(false);
+    else
+        emit windowFocusChanged(true);
 }
 
 void MainWindow::closeEvent(QCloseEvent *event)
@@ -76,6 +85,12 @@ void MainWindow::createDefaultSettings()
     settings.write(Settings::WINDOW_HEIGHT, 253, "WindowSettings");
     settings.write(Settings::WINDOW_Y_POSITION, screenGeometry.height() - this->height() - ui->statusbar->height(), "WindowSettings");
     settings.write(Settings::WINDOW_X_POSITION, 0, "WindowSettings");
+
+    settings.write(Settings::DATABASE_PATH, QApplication::applicationDirPath() + "/ApBAZE.db", "Settings");
+
+
+    QMessageBox::information(this, "Создание файла конфигурации",
+                             "Файл конфигурации не был найден, был создан файл конфигурации по умолчанию.");
 }
 
 void MainWindow::setWindowGeometry()
@@ -115,13 +130,13 @@ void MainWindow::setWindowsWidgets()
     pchLabel = new QLabel(this);
     coordLabel = new QLabel(this);
     distanceLabel = new QLabel(this);
-    spdLabel->setText("spdLabel");
+    spdLabel->setText("[Скорости]");
     spdLabel->setMinimumWidth(150);
-    pchLabel->setText("pchLabel");
+    pchLabel->setText("[ПЧ]");
     pchLabel->setMinimumWidth(50);
-    coordLabel->setText("coordLabel");
+    coordLabel->setText("[Координата]");
     coordLabel->setMinimumWidth(150);
-    distanceLabel->setText("distanceLabel");
+    distanceLabel->setText("[Перегон]");
     distanceLabel->setMinimumWidth(150);
     ui->statusbar->addWidget(spdLabel);
     ui->statusbar->addWidget(pchLabel);
@@ -144,6 +159,12 @@ void MainWindow::connectObjects()
     connect(&plot, SIGNAL(spdChanged(QString)), this, SLOT(spdChange(QString)));
     connect(&plot, SIGNAL(pchChanged(QString)), this, SLOT(pchChange(QString)));
     connect(&plot, SIGNAL(distanceChanged(QString)), this, SLOT(distanceChange(QString)));
+
+
+    ui->graphicalDatabase->setContextMenuPolicy(Qt::CustomContextMenu);
+    connect(ui->graphicalDatabase, SIGNAL(customContextMenuRequested(QPoint)), this, SLOT(slotCustomMenuRequested(QPoint)));
+    connect(QApplication::instance(), SIGNAL(focusChanged(QWidget*, QWidget*)), this, SLOT(focusChanged(QWidget*, QWidget*)));
+    connect(this, SIGNAL(windowFocusChanged(bool)), &plot, SLOT(windowFocusChanged(bool)));
 }
 
 void MainWindow::drawPlot()
@@ -166,11 +187,9 @@ void MainWindow::getItemsMap()
 
     TrackInfo trackInfo;
 
-    QSettings config(QApplication::applicationDirPath() + "/config.ini", QSettings::IniFormat);
-    QString database = config.value("DATABASE_PATH").toString();
-    QString sql = config.value("SQL_PATH").toString();
-    qDebug() << "DB / SQL: " << database << " / " << sql;
-    if(trackInfo.setAndOpenDatabase(database, sql) == false)
+    QString database = settings.read(Settings::DATABASE_PATH, "Settings").toString();
+    qDebug() << "DB / SQL: " << database << " / " << (QApplication::applicationDirPath() + "/sql");
+    if(trackInfo.setAndOpenDatabase(database, QApplication::applicationDirPath() + "/sql") == false)
     {
         qDebug() << "Error while opening database";
         return;
@@ -178,14 +197,17 @@ void MainWindow::getItemsMap()
 
 #ifdef ATAPE_MODE
     qDebug() << "RegInfo: " << pathCoordUpdater->getRideInfo().toString();
+//    trackInfo.setDirInfo("14601", "2");
+//    plot.setReversed(true);
     trackInfo.setAssetNum(pathCoordUpdater->getRideInfo().trackCode);
     plot.setReversed(!pathCoordUpdater->getRideInfo().increase);
 #else
      // trackInfo.setAssetNum("110000123030");110000122929
     // trackInfo.setAssetNum("110000122929");VALUE="A5284454"/>
-    trackInfo.setAssetNum("A5284454");
+    // trackInfo.setAssetNum("A5284454");
     //trackInfo.setDirInfo("14601", "2");
-    // plot.setReversed(true);
+    trackInfo.setDirInfo("10901", "1");
+    plot.setReversed(false);
 #endif
     itemsMap = trackInfo.getItemsMap();
     this->setWindowTitle(trackInfo.getDirCode() + " - " + trackInfo.getTrackNum() + ", " + trackInfo.getDirName());

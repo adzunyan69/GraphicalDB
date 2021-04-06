@@ -87,6 +87,12 @@ void Plot::drawObjects(QMap<TrackItem::TrackItemType, QVector<TrackItem>> &items
     qDebug() << "Getting kmVector";
     const QVector<TrackItem> &km = itemsMap[TrackItem::KM];
 
+    if(km.isEmpty())
+    {
+        qDebug() << "Отсутствуют километры.";
+        return;
+    }
+
     const TrackItem &kmMin = km.first();
     const TrackItem &kmMax = km.last();
     qDebug() << "Min km: " << kmMin.km << "/" << kmMin.absBegin << "; Max km: " << kmMax.km << "/" << kmMax.absBegin;
@@ -114,11 +120,6 @@ void Plot::drawObjects(QMap<TrackItem::TrackItemType, QVector<TrackItem>> &items
 void Plot::drawKM(const QVector<TrackItem> &km)
 {
     qDebug() << "drawKM";
-    if(km.empty())
-    {
-        qDebug() << "Km vec is empty";
-        return;
-    }
     QSharedPointer<QCPAxisTickerText> kmTextTicker(new QCPAxisTickerText);
 
     plot->xAxis->setTicker(kmTextTicker);
@@ -154,20 +155,15 @@ void Plot::drawKM(const QVector<TrackItem> &km)
 void Plot::drawSTR(const QVector<TrackItem> &str)
 {
     qDebug() << "Drawing STR";
-    if(str.empty())
-    {
-        qDebug() << "str vec is empty";
-        return;
-    }
     QVector<double> strAbsCoords, strHeights;
     QVector<double> xLeft, xRight, yLeft, yRight;
 
     for(const TrackItem &strItem: str)
     {
         qDebug() << "Str abs: " << strItem.absBegin << "km m: " << strItem.beginKM << " / " << strItem.beginM << " numb: " << strItem.numb;
-        if(strItem.name == "1" || (strItem.name == "2" && reversed == true))
+        if((strItem.name == "2" && reversed == false) || (strItem.name == "1" && reversed == true))
             xLeft.push_back(strItem.absBegin);
-        else if(strItem.name == "2" || (strItem.name == "1" && reversed == true))
+        else if((strItem.name == "1" && reversed == false)|| (strItem.name == "2" && reversed == true))
             xRight.push_back(strItem.absBegin);
 
         strAbsCoords.push_back(strItem.absBegin);
@@ -209,11 +205,6 @@ void Plot::drawSTR(const QVector<TrackItem> &str)
 void Plot::drawMOV(const QVector<TrackItem> &mov)
 {
     qDebug() << "Drawing mov";
-    if(mov.empty())
-    {
-        qDebug() << "mov vec is empty";
-        return;
-    }
     QVector<double> x, y;
 
     y = QVector<double>(mov.size(), yMOV);
@@ -227,7 +218,7 @@ void Plot::drawMOV(const QVector<TrackItem> &mov)
 
 //        line->setTail(QCPLineEnding::esSquare);
 //        line->setHead(QCPLineEnding::esSquare);
-        double movPos = movItem.absBegin + (movItem.absBegin - movItem.absEnd) / 2;
+        double movPos = movItem.absBegin + (movItem.absEnd - movItem.absBegin) / 2;
 
         qDebug() << "Drawing mov: " << movPos;
         QCPItemText *movLabel = new QCPItemText(plot);
@@ -248,11 +239,6 @@ void Plot::drawMOV(const QVector<TrackItem> &mov)
 void Plot::drawMOST(const QVector<TrackItem> &most)
 {
     qDebug() << "Drawing most";
-    if(most.empty())
-    {
-        qDebug() << "most vec is empty";
-        return;
-    }
     QVector<double> x, y;
 
     y = QVector<double>(most.size(), yMOST);
@@ -265,7 +251,7 @@ void Plot::drawMOST(const QVector<TrackItem> &most)
 
 //        line->setTail(QCPLineEnding::esFlatArrow);
 //        line->setHead(QCPLineEnding::esFlatArrow);
-        double mostPos = mostItem.absBegin + (mostItem.absBegin - mostItem.absEnd) / 2;
+        double mostPos = mostItem.absBegin + (mostItem.absEnd - mostItem.absBegin) / 2;
         qDebug() << "Most pos: " << mostPos;
 
         QCPItemText *mostLabel = new QCPItemText(plot);
@@ -283,11 +269,6 @@ void Plot::drawMOST(const QVector<TrackItem> &most)
 void Plot::drawPCH(const QVector<TrackItem> &pch)
 {
     qDebug() << "Drawing PCH";
-    if(pch.empty())
-    {
-        qDebug() << "pch vec is empty";
-        return;
-    }
     QCPItemStraightLine *linePCHTop = new QCPItemStraightLine(plot);
     linePCHTop->point1->setCoords(0, yPCH + yPCHdiff);
     linePCHTop->point2->setCoords(1, yPCH + yPCHdiff);
@@ -322,11 +303,6 @@ void Plot::drawPCH(const QVector<TrackItem> &pch)
 void Plot::drawSTAN(const QVector<TrackItem> &stan)
 {
     qDebug() << "Drawing stan";
-    if(stan.empty())
-    {
-        qDebug() << "stan vec is empty";
-        return;
-    }
     QVector<double> x, y;
 
     y = QVector<double>(stan.size(), ySTAN + ySTANosDiff);
@@ -364,11 +340,6 @@ void Plot::drawSTAN(const QVector<TrackItem> &stan)
 void Plot::drawCUR(const QVector<TrackItem> &cur)
 {
     qDebug() << "Drawing cur";
-    if(cur.empty())
-    {
-        qDebug() << "cur vec is empty";
-        return;
-    }
     QVector<double> x, y;
     QVector<double> curAbsCoords, curHeights;
 
@@ -380,7 +351,6 @@ void Plot::drawCUR(const QVector<TrackItem> &cur)
     for(auto it = cur.begin() + 1; it != cur.end(); ++it)
     {
 
-        qDebug() << "Drawing cur " << it->numb;
         x.push_back(it->absBegin);
         y.push_back(it->oKM == 0 ? yCUR :
                                    it->oKM < 0 ? yCUR - yCURdiff : yCUR + yCURdiff);
@@ -403,10 +373,12 @@ void Plot::drawCUR(const QVector<TrackItem> &cur)
 //            line->setHead(QCPLineEnding::esBar);
 //        }
 
-        qDebug() << "Drawing cur labels";
         auto prev = it - 1;
         if(prev->oKM != 0 && it->oKM != 0)
         {
+
+//            if(prev->oKM == it->oKM && prev->oM == it->oM)
+//                continue;
 
              QCPItemText *curLabel = new QCPItemText(plot);
 
@@ -462,11 +434,6 @@ void Plot::drawCUR(const QVector<TrackItem> &cur)
 void Plot::drawSPD(const QVector<TrackItem> &spd)
 {
     qDebug() << "Drawing SPD";
-    if(spd.empty())
-    {
-        qDebug() << "spd vec is empty";
-        return;
-    }
     QVector<int> spdAbsCoords;
 
     for(auto it = spd.begin(); it != spd.end(); ++it)
@@ -484,21 +451,19 @@ void Plot::drawSPD(const QVector<TrackItem> &spd)
 
         QCPItemText *text1 = new QCPItemText(plot);
 
-        text1->setTextAlignment(Qt::AlignLeft);
         if(reversed == false)
-            text1->position->setCoords(it->absBegin + 10, ySPD + ySPDdiff);
+            text1->position->setCoords(it->absBegin + 7, ySPD + ySPDdiff);
         else
-            text1->position->setCoords(it->absEnd + 10, ySPD + ySPDdiff);
+            text1->position->setCoords(it->absEnd - 7, ySPD + ySPDdiff);
         text1->setPositionAlignment(Qt::AlignLeft);
         text1->setText(it->name.split(";").first());
 
         QCPItemText *text2 = new QCPItemText(plot);
 
-        text2->setTextAlignment(Qt::AlignLeft);
         if(reversed == false)
             text2->position->setCoords(it->absBegin + 7, ySPD);
         else
-            text2->position->setCoords(it->absEnd + 7, ySPD);
+            text2->position->setCoords(it->absEnd - 7, ySPD);
         text2->setPositionAlignment(Qt::AlignLeft);
         text2->setText(it->name.split(";").at(1));
 
@@ -538,7 +503,8 @@ void Plot::changePosition(int absPos)
     posGraph->setData(x, y);
 
 
-    plot->xAxis->setRange(absPos, plot->xAxis->range().size(), Qt::AlignCenter);
+    if(focus == false)
+        plot->xAxis->setRange(absPos, plot->xAxis->range().size(), Qt::AlignCenter);
 
     posAbsCoord = absPos;
     posLine->point1->setCoords(posAbsCoord, 0);
@@ -577,6 +543,11 @@ void Plot::changePosition(QString pos)
 
     // qDebug() << "First km abs: " << kmVec.first().absBegin;
     changePosition(getAbsCoord(_km, _m));
+}
+
+void Plot::windowFocusChanged(bool isWindowOnFocus)
+{
+    focus = isWindowOnFocus;
 }
 
 void Plot::checkSPD(int absPos)

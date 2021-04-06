@@ -59,6 +59,8 @@ class Plot : public QObject
 
     bool reversed = false;
 
+    bool focus = false;
+
 
     void drawKM(const QVector<TrackItem> &km);
     void drawItems(const QVector<TrackItem> &items, int yPos);
@@ -90,6 +92,7 @@ signals:
 public slots:
     void changePosition(int absPos);
     void changePosition(QString pos);
+    void windowFocusChanged(bool isWindowOnFocus);
 
 };
 
