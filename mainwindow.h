@@ -60,6 +60,7 @@ private slots:
 public slots:
     void slotCustomMenuRequested(QPoint pos);
     void slotOnTopToggle(bool isOnTop);
+    void slotBdConvectorStart();
     void focusChanged(QWidget* old, QWidget* now);
 
 

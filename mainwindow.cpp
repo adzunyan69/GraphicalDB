@@ -41,8 +41,15 @@ void MainWindow::slotCustomMenuRequested(QPoint pos)
     onTopToggle->setCheckable(true);
     onTopToggle->setChecked(settings.read(Settings::WINDOW_ON_TOP, "WindowSettings").toBool());
     connect(onTopToggle, SIGNAL(toggled(bool)), this, SLOT(slotOnTopToggle(bool)));
+
+    QAction* bdConvectorStart = new QAction("Запуск обновления БД", menu);
+    connect(bdConvectorStart, SIGNAL(triggered()), this, SLOT(slotBdConvectorStart()));
+
     menu->addAction(onTopToggle);
+    menu->addAction(bdConvectorStart);
+
     menu->popup(this->mapToGlobal(pos));
+
 }
 
 void MainWindow::slotOnTopToggle(bool isOnTop)
@@ -56,6 +63,21 @@ void MainWindow::slotOnTopToggle(bool isOnTop)
         this->setWindowFlags(this->windowFlags() & ~Qt::WindowStaysOnTopHint);
 
     show();
+}
+
+void MainWindow::slotBdConvectorStart()
+{
+    QProcess *bdConvector = new QProcess(this);
+    QString programmPath = QApplication::applicationDirPath() + "/BDConv/BDRadioavionika.exe";
+    if(QFile::exists(programmPath) == false)
+    {
+        emit error("Ошибка при запуске конвертора: исполняемый файл отсуствует (" + programmPath + ").");
+        return;
+    }
+    bdConvector->setProgram(programmPath);
+    bdConvector->start();
+    if(bdConvector->waitForFinished() == false)
+        emit error("Ошибка при конвертации: программа не завершила работу.");
 }
 
 void MainWindow::focusChanged(QWidget* old, QWidget* now)

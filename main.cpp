@@ -5,11 +5,25 @@
 #include <QDateTime>
 #include <QDir>
 #include <QFile>
+
+
 void myMessageHandler(QtMsgType type, const QMessageLogContext& context, const QString &msg);
 void logMessageBeforeStartup(QString msg);
+
 int main(int argc, char *argv[])
 {
     QApplication a(argc, argv);
+
+    QSharedMemory sharedMemory;
+
+    sharedMemory.setKey("GraphicalDatabaseUniqueKeyForSigleInstance");
+    if(sharedMemory.create(1) == false)
+    {
+       QMessageBox::warning(NULL, " ", "Приложение уже запущено.");
+       a.exit(); // exit already a process running
+       return 0;
+    }
+
     qInstallMessageHandler(myMessageHandler);
 
     logMessageBeforeStartup(QString::number(argc));
