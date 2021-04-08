@@ -53,6 +53,8 @@ private:
 signals:
     void positionChanged(int newAbsPos);
     void windowFocusChanged(bool isWindowOnFocus);
+
+    void error(QString msg);
 private slots:
     void currentPathCoordUpdate(QString);
 public slots:
@@ -66,6 +68,8 @@ public slots:
     void pchChange(QString);
     void distanceChange(QString);
     void coordChange(int);
+
+    void showErrorMessage(QString msg);
 
 };
 #endif // MAINWINDOW_H

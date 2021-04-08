@@ -1,20 +1,23 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 
-#define ATAPE_MODE
+// #define ATAPE_MODE
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::MainWindow)
 {
-    using namespace std;
-
     ui->setupUi(this);
+
+    connect(this, SIGNAL(error(QString)), this, SLOT(showErrorMessage(QString)));
 
     setupWindow();
 
     qDebug() << "Start pathCoordUpdater";
     pathCoordUpdater = new RideUpdateWorker(this);
+
+    connect(&plot, SIGNAL(error(QString)), this, SLOT(showErrorMessage(QString)));
+     connect(pathCoordUpdater, SIGNAL(error(QString)), this, SLOT(showErrorMessage(QString)));
 
     qDebug() << "Setup plot";
     plot.setupPlot(ui->graphicalDatabase);
@@ -22,6 +25,12 @@ MainWindow::MainWindow(QWidget *parent)
     connectObjects();
 
 
+}
+
+void MainWindow::showErrorMessage(QString msg)
+{
+    if(QMessageBox::warning(this, "Ошибка", msg, QMessageBox::Ok | QMessageBox::Close) == QMessageBox::Close)
+        exit(1);
 }
 
 void MainWindow::slotCustomMenuRequested(QPoint pos)
@@ -115,10 +124,16 @@ void MainWindow::setWindowGeometry()
             this->move(x, y);
         }
         else
+        {
             qDebug() << "Error: converting from QVariant to Int (geometry).";
+            emit error("Ошибка при получении параметров окна из файла настроек.");
+        }
     }
     else
+    {
         qDebug() << "Error: reading geometry settings.";
+        emit error("Ошибка чтения параметров окна из настроек.");
+    }
 
 
     qDebug() << "Window geometry " << this->geometry();
@@ -151,9 +166,9 @@ void MainWindow::connectObjects()
 #else
     QTimer *timer = new QTimer(this);
     timer->setInterval(1000);
-    connect(timer, SIGNAL(timeout()), this, SLOT(positionChange()));
-    connect(this, SIGNAL(positionChanged(int)), &plot, SLOT(changePosition(int)));
-    connect(this, SIGNAL(positionChanged(int)), this, SLOT(coordChange(int)));
+     connect(timer, SIGNAL(timeout()), this, SLOT(positionChange()));
+     connect(this, SIGNAL(positionChanged(int)), &plot, SLOT(changePosition(int)));
+     connect(this, SIGNAL(positionChanged(int)), this, SLOT(coordChange(int)));
     timer->start();
 #endif
     connect(&plot, SIGNAL(spdChanged(QString)), this, SLOT(spdChange(QString)));
@@ -187,11 +202,14 @@ void MainWindow::getItemsMap()
 
     TrackInfo trackInfo;
 
+    connect(&trackInfo, SIGNAL(error(QString)), this, SLOT(showErrorMessage(QString)));
+
     QString database = settings.read(Settings::DATABASE_PATH, "Settings").toString();
     qDebug() << "DB / SQL: " << database << " / " << (QApplication::applicationDirPath() + "/sql");
     if(trackInfo.setAndOpenDatabase(database, QApplication::applicationDirPath() + "/sql") == false)
     {
         qDebug() << "Error while opening database";
+        error("Ошибка при открытии базы.");
         return;
     }
 
@@ -204,12 +222,14 @@ void MainWindow::getItemsMap()
 #else
      // trackInfo.setAssetNum("110000123030");110000122929
     // trackInfo.setAssetNum("110000122929");VALUE="A5284454"/>
-    // trackInfo.setAssetNum("A5284454");
-    //trackInfo.setDirInfo("14601", "2");
-    trackInfo.setDirInfo("10901", "1");
+    trackInfo.setAssetNum("A5284454");
+    // trackInfo.setDirInfo("14601", "1");
+    //trackInfo.setDirInfo("10901", "1");
     plot.setReversed(false);
 #endif
     itemsMap = trackInfo.getItemsMap();
+    if(itemsMap.isEmpty())
+        emit error("Не было получено объектов из БД.");
     this->setWindowTitle(trackInfo.getDirCode() + " - " + trackInfo.getTrackNum() + ", " + trackInfo.getDirName());
 
     qDebug() << "Full time for getting objects: " << time.msecsTo(QTime::currentTime()) << " ms";
@@ -258,6 +278,7 @@ void MainWindow::setRegistryInfo(QString pathToReg)
     if(pathCoordUpdater == nullptr)
     {
         qDebug() << "Error: path coordinate updater is nullptr";
+        emit error("Ошибка инициализации объекта для проверки координаты.");
         return;
     }
     static_cast<RideUpdateWorker*>(pathCoordUpdater)->setRegistryPathAndRideInfo(pathToReg);
@@ -274,6 +295,7 @@ void MainWindow::startPathCoordUpdater()
     qDebug() << "Start PathCoordUpdater";
     if(pathCoordUpdater == nullptr)
     {
+        emit error("Ошибка инициализации объекта для проверки координаты.");
         qDebug() << "Error: path coordinate updater is nullptr";
         return;
     }
@@ -289,7 +311,9 @@ void MainWindow::currentPathCoordUpdate(QString pathCoord)
     km = pathCoord.split(";").first().toInt(&isCorrectPathCoord);
     if(isCorrectPathCoord == false)
     {
+
         qDebug() << "Invalid path coord: km";
+        emit error("Получена неверная путейская координата в реестре: " + pathCoord);
         return;
     }
 
@@ -297,10 +321,9 @@ void MainWindow::currentPathCoordUpdate(QString pathCoord)
     if(isCorrectPathCoord == false)
     {
         qDebug() << "Invalid path coord: m";
+        emit error("Получена неверная путейская координата в реестре: " + pathCoord);
         return;
     }
 
-    // qDebug() << "currentPathCoordUpdate";
     coordLabel->setText(QString::number(km) + " км " + QString::number(m) + " м");
-    // ui->statusbar->showMessage("Current path coord: " + pathCoord);
 }

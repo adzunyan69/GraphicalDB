@@ -10,7 +10,7 @@ struct TrackItem
     enum TrackItemType{ KM, STR, STAN, PCH, MOST, MOV, CUR, SPD} type;
 
     QString name;
-    int numb;
+    QString numb;
 
     int km = -1;
     int beginKM = -1;
@@ -64,8 +64,10 @@ public:
 
     int getAbsCoord(QVector<TrackItem> &km, int pathKm, int pathM);
 
+public slots:
+    void errorFromDBA(QString msg);
 signals:
-
+    void error(QString msg);
 };
 
 

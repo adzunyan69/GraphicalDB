@@ -2,6 +2,13 @@
 
 TrackInfo::TrackInfo(QObject *parent) : QObject(parent)
 {
+    connect(&dba, SIGNAL(error(QString)), this, SLOT(errorFromDBA(QString)));
+}
+
+void TrackInfo::errorFromDBA(QString msg)
+{
+    qDebug() << "Error from dba: " << msg;
+    emit error(msg);
 }
 
 void TrackInfo::setAssetNum(QString _assetNum)
@@ -9,6 +16,7 @@ void TrackInfo::setAssetNum(QString _assetNum)
     if(_assetNum.isEmpty() == true)
     {
         qDebug() << "Error: assetNum is empty";
+        emit error("Ошибка: код пути пуст.");
         return;
     }
 
@@ -38,6 +46,8 @@ void TrackInfo::setDirInfo(QString _dirCode, QString _trackNum)
     {
         qDebug() << "Error while getting dirName";
         qDebug() << query.lastError();
+        emit error("Ошибка при выполнении запроса для конвертации кода пути в код направления и номер пути (" +
+                   _dirCode + ", " + _trackNum + "\nТекст ошибки: " + query.lastError().text());
     }
 
     dirName = query.value("NAME").toString();
@@ -49,6 +59,7 @@ bool TrackInfo::setAndOpenDatabase(QString databaseName, QString _sqlPath)
     {
         qDebug() << "Error: database error";
         qDebug() << dba.lastError();
+        emit error("Ошибка при открытии БД: " + dba.lastError());
         return false;
     }
 
@@ -68,6 +79,7 @@ QVector<TrackItem> TrackInfo::getVec(QString sqlName)
         if(assetNum.isEmpty() == true)
         {
             qDebug() << "Asset num is empty";
+            emit error("Отсутствует код пути и код направления.");
             return result;
         }
         bindValue.insert(":ASSET_NUM", assetNum);
@@ -102,7 +114,7 @@ QVector<TrackItem> TrackInfo::getVec(QString sqlName)
             item.beginKM = query.value("B_KM").toInt();
             item.beginM = query.value("B_M").toInt();
             item.name = query.value("NAME").toString();
-            item.numb = query.value("NUMB").toInt();
+            item.numb = query.value("NUMB").toString();
         }
         else if(objType == "STN")
         {
@@ -258,7 +270,7 @@ void TrackInfo::calculateAbsCoord(QVector<TrackItem> &trackItems, QVector<TrackI
         {
             it->absBegin = getAbsCoord(km, it->beginKM, it->beginM);
             //qDebug() << "Str: Begin: " << it->beginKM << "km " << it->beginM
-            //         << " Abs Begin: " << it->absBegin;
+            //         << " Abs Begin: " << it->absBegin << " numb: " << it->numb;
         }
     }
     else if(trackItems.first().type == TrackItem::STAN)

@@ -89,10 +89,13 @@ signals:
     void pchChanged(QString newPCH);
     void distanceChanged(QString newDistance);
 
+    void error(QString msg);
+
 public slots:
     void changePosition(int absPos);
     void changePosition(QString pos);
     void windowFocusChanged(bool isWindowOnFocus);
+    void rangeChangedLimit(QCPRange newRange);
 
 };
 

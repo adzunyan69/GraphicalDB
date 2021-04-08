@@ -7,6 +7,10 @@ DatabaseAccess::DatabaseAccess(QObject *parent) : QObject(parent)
     {
         qDebug() << "Add database SQLITE";
         db = QSqlDatabase::addDatabase("QSQLITE");
+        if(db.isValid() == false)
+        {
+            emit error("Ошибка добавления драйвера SQLITE, текст ошибки: " + db.lastError().text());
+        }
     }
 
 }
@@ -19,9 +23,16 @@ DatabaseAccess::~DatabaseAccess()
 
 bool DatabaseAccess::openDatabase(QString databasePath)
 {
+    if(QFile::exists(databasePath) != true)
+    {
+        qDebug() << "Не существует файла БД.";
+        emit error("Файл базы данных не существует: " + databasePath);
+        return false;
+    }
     if(db.isValid() == false)
     {
         qDebug() << "Database is not valid";
+        emit error("Ошибка: db.isValid().");
         return false;
     }
 
@@ -45,7 +56,10 @@ QSqlQuery DatabaseAccess::execQueryString(const QString &query)
 
     bool isSuccess = q.exec(query);
     if(isSuccess == false)
+    {
         qDebug() << q.lastError();
+        emit error("Ошибка выпонления запроса " + query + "\nТекст ошибки: " + q.lastError().text());
+    }
 
     return q;
 }
@@ -61,6 +75,7 @@ QSqlQuery DatabaseAccess::execQueryFile(const QString &filePath)
     {
         qDebug() << "Error: file does not exist";
         qDebug() << filePath;
+        emit error("Ошибка выполнения запроса из файла " + filePath + " - файл не существует.");
         return QSqlQuery();
     }
 
@@ -88,12 +103,9 @@ QSqlQuery DatabaseAccess::execQueryStringBind(const QString &query, const QMap<Q
     }
     if(q.exec() != true)
     {
-        error = q.lastError().text();
-        qDebug() << error;
+        qDebug() << q.lastError().text();
+        emit error("Ошибка выполнения запроса " + query + "\nТекст ошибки: " + q.lastError().text());
     }
-
-    // qDebug() << "last query: " << q.lastQuery();
-    qDebug() << "last error: " << q.lastError();
 
     return q;
 
@@ -113,6 +125,7 @@ QSqlQuery DatabaseAccess::execQueryFileBind(const QString filePath, const QMap<Q
     {
         qDebug() << "Error: file does not exist";
         qDebug() << filePath;
+        emit error("Ошибка выполнения запроса из файла " + filePath + " - файл не существует.");
         return QSqlQuery();
     }
 

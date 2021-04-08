@@ -11,7 +11,6 @@ class DatabaseAccess : public QObject
 private:
 
     QSqlDatabase db;
-    QString error;
 
     bool DBExist() const;
 
@@ -30,6 +29,7 @@ public:
     QString lastError() { return db.lastError().text(); }
 
 signals:
+    void error(QString msg);
 
 };
 

@@ -26,7 +26,7 @@ private:
 
     QSettings *settings;
 public:
-    Settings(QString filename = "settings.conf");
+    Settings(QString filename = "settings.ini");
     ~Settings();
 
 
