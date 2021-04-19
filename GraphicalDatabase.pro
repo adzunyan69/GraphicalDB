@@ -4,7 +4,7 @@ QT       += core gui sql printsupport xml
 VERSION_MAJOR = 0
 VERSION_MINOR = 2
 VERSION_BUILD = 0 #$$system(version.bat)
-VERSION_BUILD_MINOR = 4
+VERSION_BUILD_MINOR = 5
 
 DEFINES += "VERSION_MAJOR=$$VERSION_MAJOR"\
        "VERSION_MINOR=$$VERSION_MINOR"\

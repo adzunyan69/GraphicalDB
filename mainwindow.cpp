@@ -1,7 +1,7 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 
-// #define ATAPE_MODE
+//#define ATAPE_MODE
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -76,8 +76,13 @@ void MainWindow::slotBdConvectorStart()
     }
     bdConvector->setProgram(programmPath);
     bdConvector->start();
-    if(bdConvector->waitForFinished() == false)
+    if(bdConvector->waitForFinished(-1) == false)
         emit error("Ошибка при конвертации: программа не завершила работу.");
+    else
+    {
+        QMessageBox::information(this, "Завершение конвертации", "База обновлена. Перезапустите, пожалуйста, приложение.");
+        qApp->quit();
+    }
 }
 
 void MainWindow::focusChanged(QWidget* old, QWidget* now)
@@ -206,6 +211,7 @@ void MainWindow::connectObjects()
 
 void MainWindow::drawPlot()
 {
+
     getItemsMap();
 
     qDebug() << "Drawing plot";
@@ -214,7 +220,7 @@ void MainWindow::drawPlot()
 
 
 
-    qDebug() << "Full time for drawing grapgical database: " << time.msecsTo(QTime::currentTime()) << " ms";
+    qDebug() << "Full time for drawing graphical database: " << time.msecsTo(QTime::currentTime()) << " ms";
 }
 
 void MainWindow::getItemsMap()
@@ -231,7 +237,9 @@ void MainWindow::getItemsMap()
     if(trackInfo.setAndOpenDatabase(database, QApplication::applicationDirPath() + "/sql") == false)
     {
         qDebug() << "Error while opening database";
-        error("Ошибка при открытии базы.");
+        error("Ошибка при открытии базы: " + database);
+        if(QMessageBox::question(this, "Обновить БД?", "Запустить конвертор для обновления БД?") == QMessageBox::Yes)
+            slotBdConvectorStart();
         return;
     }
 
@@ -244,9 +252,12 @@ void MainWindow::getItemsMap()
 #else
      // trackInfo.setAssetNum("110000123030");110000122929
     // trackInfo.setAssetNum("110000122929");VALUE="A5284454"/>
-    trackInfo.setAssetNum("A5284454");
+    // trackInfo.setAssetNum("A5284454");
     // trackInfo.setDirInfo("14601", "1");
     //trackInfo.setDirInfo("10901", "1");
+    //trackInfo.setDirInfo("15301", "1");
+    // trackInfo.setDirInfo("73001", "1");
+    trackInfo.setAssetNum("14601");
     plot.setReversed(false);
 #endif
     itemsMap = trackInfo.getItemsMap();

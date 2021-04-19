@@ -38,6 +38,8 @@ void Plot::setupPlot(QCustomPlot *_plot)
     plot->yAxis->setTickLengthIn(0);
     plot->yAxis->grid()->setVisible(false);
     itemTypesTextTicker->addTick(yCUR, "План линий");
+    itemTypesTextTicker->addTick(yCUR + yCURdiff, "Левая кривая");
+    itemTypesTextTicker->addTick(yCUR - yCURdiff, "Правая кривая");
     itemTypesTextTicker->addTick(ySTAN + yPCHdiff / 2, "Объекты ЖД пути");
     itemTypesTextTicker->addTick(yPCH - yPCHdiff / 2, "Дистанции пути");
     itemTypesTextTicker->addTick(ySPD - ySPDdiff / 2, "Скорости");
@@ -318,6 +320,11 @@ void Plot::drawSTAN(const QVector<TrackItem> &stan)
 void Plot::drawCUR(const QVector<TrackItem> &cur)
 {
     qDebug() << "Drawing cur";
+    if(cur.isEmpty())
+    {
+        qDebug() << "Отсутствуют данные для отрисовки, пропуск.";
+        return;
+    }
     QVector<double> x, y;
     QVector<double> curAbsCoords, curHeights;
 
@@ -442,8 +449,8 @@ void Plot::changePosition(int absPos)
     posGraph->setData(x, y);
 
 
-    //if(focus == false)
-     //   plot->xAxis->setRange(absPos, plot->xAxis->range().size(), Qt::AlignCenter);
+    if(focus == false)
+        plot->xAxis->setRange(absPos, plot->xAxis->range().size(), Qt::AlignCenter);
 
     posAbsCoord = absPos;
     posLine->point1->setCoords(posAbsCoord, 0);
@@ -566,5 +573,5 @@ int Plot::getAbsCoord(int pathKm, int pathM)
 
 void Plot::rangeChangedLimit(QCPRange newRange)
 {
-        plot->xAxis->setRange(newRange.bounded(kmVec.first().absBegin - 1000, kmVec.last().absEnd + 1000));
+        plot->xAxis->setRange(newRange.bounded(kmVec.first().absBegin - 5000, kmVec.last().absEnd + 5000));
 }

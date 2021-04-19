@@ -12,7 +12,7 @@ Settings::Settings(QString filename)
     settingsMap[WINDOW_Y_POSITION] = "WindowVerticalPosition";
     settingsMap[WINDOW_X_POSITION] = "WindowHorisontalPosition";
 
-    settingsMap[DATABASE_PATH] = "DatabasePath";
+    settingsMap[DATABASE_PATH] = "DirBDRad";
 
 
     QVariant firstRunValue = settings->value("General/firstRun");

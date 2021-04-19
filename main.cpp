@@ -9,6 +9,7 @@
 
 void myMessageHandler(QtMsgType type, const QMessageLogContext& context, const QString &msg);
 void logMessageBeforeStartup(QString msg);
+void showErrorMessageBeforeStartup(QString msg);
 
 int main(int argc, char *argv[])
 {
@@ -36,6 +37,7 @@ int main(int argc, char *argv[])
     {
         logMessageBeforeStartup("Usage; program <path to reg>");
         qDebug() << "Usage: program <path to reg>";
+        showErrorMessageBeforeStartup("Ошибка при запуске приложения: не был получен путь к ветке реестра (неверный список или количеств аргументов).");
         return 1;
     }
 
@@ -43,6 +45,7 @@ int main(int argc, char *argv[])
     {
         logMessageBeforeStartup("Invalid path to registry");
         qDebug() << "Invalid path to registry";
+        showErrorMessageBeforeStartup("Неверная ветка реестра");
         return 1;
     }
 
@@ -74,6 +77,12 @@ void logMessageBeforeStartup(QString msg)
     // txt = cp1251->toUnicode(txt.toUtf8());
     ts << msg << endl;
     outFile.close();
+}
+
+void showErrorMessageBeforeStartup(QString msg)
+{
+    if(QMessageBox::warning(nullptr, "Ошибка", msg, QMessageBox::Ok | QMessageBox::Close) == QMessageBox::Close)
+        exit(1);
 }
 
 void myMessageHandler(QtMsgType type, const QMessageLogContext& context, const QString &msg)
