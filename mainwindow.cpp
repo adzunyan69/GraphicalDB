@@ -1,7 +1,10 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 
-//#define ATAPE_MODE
+#define ATAPE_MODE
+
+#define DIR_CODE "14601"
+#define TRACK_NUM "1"
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -23,6 +26,7 @@ MainWindow::MainWindow(QWidget *parent)
     plot.setupPlot(ui->graphicalDatabase);
 
     connectObjects();
+
 
 
 }
@@ -190,6 +194,7 @@ void MainWindow::connectObjects()
 {
 #ifdef ATAPE_MODE
     connect(pathCoordUpdater, SIGNAL(currentPathCoordChanged(QString)), &plot, SLOT(changePosition(QString)));
+    connect(pathCoordUpdater, SIGNAL(trackChanged()), this, SLOT(redrawTrack()));
 #else
     QTimer *timer = new QTimer(this);
     timer->setInterval(1000);
@@ -233,7 +238,7 @@ void MainWindow::getItemsMap()
     connect(&trackInfo, SIGNAL(error(QString)), this, SLOT(showErrorMessage(QString)));
 
     QString database = settings.read(Settings::DATABASE_PATH, "Settings").toString();
-    qDebug() << "DB / SQL: " << database << " / " << (QApplication::applicationDirPath() + "/sql");
+    qDebug() << "DB / SQL: " << database << "  / " << (QApplication::applicationDirPath() + "/sql");
     if(trackInfo.setAndOpenDatabase(database, QApplication::applicationDirPath() + "/sql") == false)
     {
         qDebug() << "Error while opening database";
@@ -245,7 +250,7 @@ void MainWindow::getItemsMap()
 
 #ifdef ATAPE_MODE
     qDebug() << "RegInfo: " << pathCoordUpdater->getRideInfo().toString();
-//    trackInfo.setDirInfo("14601", "2");
+//    trackInfo.setDirInfo(DIR_CODE, TRACK_NUM);
 //    plot.setReversed(true);
     trackInfo.setAssetNum(pathCoordUpdater->getRideInfo().trackCode);
     plot.setReversed(!pathCoordUpdater->getRideInfo().increase);
@@ -253,11 +258,11 @@ void MainWindow::getItemsMap()
      // trackInfo.setAssetNum("110000123030");110000122929
     // trackInfo.setAssetNum("110000122929");VALUE="A5284454"/>
     // trackInfo.setAssetNum("A5284454");
-    // trackInfo.setDirInfo("14601", "1");
+    trackInfo.setDirInfo(DIR_CODE, TRACK_NUM);
     //trackInfo.setDirInfo("10901", "1");
     //trackInfo.setDirInfo("15301", "1");
     // trackInfo.setDirInfo("73001", "1");
-    trackInfo.setAssetNum("14601");
+    // trackInfo.setAssetNum("14601");
     plot.setReversed(false);
 #endif
     itemsMap = trackInfo.getItemsMap();
@@ -306,7 +311,10 @@ MainWindow::~MainWindow()
 
 void MainWindow::setRegistryInfo(QString pathToReg)
 {
-#ifdef ATAPE_MODE
+#ifndef ATAPE_MODE
+    pathToReg = "HKEY_CURRENT_USER\\SOFTWARE\\Radioavionika\\PAK NK\\Temp\\current";
+#endif
+
     qDebug() << "Set Registry Info";
     if(pathCoordUpdater == nullptr)
     {
@@ -317,8 +325,6 @@ void MainWindow::setRegistryInfo(QString pathToReg)
     static_cast<RideUpdateWorker*>(pathCoordUpdater)->setRegistryPathAndRideInfo(pathToReg);
     qDebug() << "Registry info: " <<
                 pathCoordUpdater->getRideInfo().toString();
-    qDebug() << "Getting items from db";
-#endif
 
 }
 
@@ -359,4 +365,9 @@ void MainWindow::currentPathCoordUpdate(QString pathCoord)
     }
 
     coordLabel->setText(QString::number(km) + " км " + QString::number(m) + " м");
+}
+
+void MainWindow::redrawTrack()
+{
+    drawPlot();
 }

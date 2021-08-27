@@ -15,6 +15,7 @@ void TrackInfo::errorFromDBA(QString msg)
 
 void TrackInfo::setAssetNum(QString _assetNum)
 {
+    qDebug() << "AssetNum: " << _assetNum;
     if(_assetNum.isEmpty() == true)
     {
         qDebug() << "Error: assetNum is empty";
@@ -50,6 +51,7 @@ void TrackInfo::setAssetNum(QString _assetNum)
 
 void TrackInfo::setDirInfo(QString _dirCode, QString _trackNum)
 {
+    qDebug() << "DirCode: " << _dirCode << ", trackNum: " << _trackNum;
     dirCode = _dirCode;
     trackNum = _trackNum;
 
@@ -93,7 +95,7 @@ QVector<TrackItem> TrackInfo::getVec(QString sqlName)
         if(assetNum.isEmpty() == true)
         {
             qDebug() << "Asset num is empty";
-            emit error("Отсутствует код пути и код направления.");
+            // emit error("Отсутствует код пути и код направления.");
             return result;
         }
         bindValue.insert(":ASSET_NUM", assetNum);
@@ -198,6 +200,17 @@ QVector<TrackItem> TrackInfo::getVec(QString sqlName)
                         query.value("VPS").toString() + "/" +
                         query.value("VGR").toString() + "/" +
                         query.value("VPR").toString();
+
+        }
+        else if(objType == "SLP")
+        {
+            item.type = TrackItem::SLEEPER;
+
+            item.beginKM = query.value("B_KM").toInt();
+            item.beginM = query.value("B_M").toInt();
+            item.endKM = query.value("E_KM").toInt();
+            item.endM = query.value("E_M").toInt();
+
         }
 
         result.push_back(item);
@@ -234,6 +247,8 @@ QMap<TrackItem::TrackItemType, QVector<TrackItem>> TrackInfo::getItemsMap()
     calculateAbsCoord(cur, km);
     QVector<TrackItem> spd =  getVec( "/SPD.sql");
     calculateAbsCoord(spd, km);
+    // QVector<TrackItem> sleeper = getVec("/SLEEPER.sql");
+    // calculateAbsCoord(sleeper, km);
 
 //    std::sort(str.begin(), str.end());
 //    std::sort(cur.begin(), cur.end());
@@ -247,6 +262,7 @@ QMap<TrackItem::TrackItemType, QVector<TrackItem>> TrackInfo::getItemsMap()
     itemsMap.insert(TrackItem::MOV, mov);
     itemsMap.insert(TrackItem::CUR, cur);
     itemsMap.insert(TrackItem::SPD, spd);
+    // itemsMap.insert(TrackItem::SLEEPER, sleeper);
     qDebug() << "Time for insert: " << time.msecsTo(QTime::currentTime());
     return itemsMap;
 }
@@ -361,6 +377,16 @@ void TrackInfo::calculateAbsCoord(QVector<TrackItem> &trackItems, QVector<TrackI
             qDebug() << "Spd: Begin" << it->beginKM << "km " << it->beginM << "m; End: " << it->endKM << " km " << it->endM << " m; "
                      << " Abs Begin: " << it->absBegin  << "; Abs End: " << it->absEnd << " spd: " << it->name;
 #endif
+        }
+    }
+    else if(trackItems.first().type == TrackItem::SLEEPER)
+    {
+        for(auto it = trackItems.begin(); it != trackItems.end(); ++it)
+        {
+            it->absBegin = getAbsCoord(km, it->beginKM, it->beginM);
+            it->absEnd = getAbsCoord(km, it->endKM, it->endM);
+            qDebug() << "Sleeper: Begin" << it->beginKM << "km " << it->beginM << "m; End: " << it->endKM << " km " << it->endM << " m; "
+                     << " Abs Begin: " << it->absBegin  << "; Abs End: " << it->absEnd;
         }
     }
 

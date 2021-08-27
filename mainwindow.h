@@ -57,6 +57,7 @@ signals:
     void error(QString msg);
 private slots:
     void currentPathCoordUpdate(QString);
+    void redrawTrack();
 public slots:
     void slotCustomMenuRequested(QPoint pos);
     void slotOnTopToggle(bool isOnTop);

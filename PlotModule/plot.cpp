@@ -1,5 +1,6 @@
 #include "plot.h"
 
+
 Plot::Plot(QObject *parent) : QObject(parent)
 {
 
@@ -80,6 +81,8 @@ void Plot::drawObjects(QMap<TrackItem::TrackItemType, QVector<TrackItem>> &items
 {
     qDebug() << "Drawing objects at qcustomplot";
 
+    plot->clearItems();
+
     // itemsMap = _itemsMap;
 
     kmVec = itemsMap[TrackItem::KM];
@@ -110,6 +113,7 @@ void Plot::drawObjects(QMap<TrackItem::TrackItemType, QVector<TrackItem>> &items
     drawSTAN(itemsMap[TrackItem::STAN]);
     drawCUR(itemsMap[TrackItem::CUR]);
     drawSPD(itemsMap[TrackItem::SPD]);
+    // drawSLEEPER(itemsMap[TrackItem::SLEEPER]);
     qDebug() << "end drawing";
 
 
@@ -438,6 +442,70 @@ void Plot::drawSPD(const QVector<TrackItem> &spd)
     spdLineBottom->point1->setCoords(0, ySPD - ySPDdiff);
     spdLineBottom->point2->setCoords(1, ySPD - ySPDdiff);
 }
+
+void Plot::drawSLEEPER(const QVector<TrackItem> &sleeper)
+{
+    qDebug() << "Drawing SLEEPER";
+
+    QCPItemStraightLine *ySleeperTopLine = new QCPItemStraightLine(plot);
+    ySleeperTopLine->point1->setCoords(0, ySleeper + ySleeperDiff);
+    ySleeperTopLine->point2->setCoords(1, ySleeper + ySleeperDiff);
+
+    QCPItemStraightLine *ySleeperBottomLine = new QCPItemStraightLine(plot);
+    ySleeperBottomLine->point1->setCoords(0, ySleeper - ySleeperDiff);
+    ySleeperBottomLine->point2->setCoords(1, ySleeper - ySleeperDiff);
+
+    for(int i = kmVec.first().absBegin; i < kmVec.last().absEnd; i+= 100)
+    {
+        QCPItemLine *line = new QCPItemLine(plot);
+        line->start->setCoords(i, ySleeper - ySleeperDiff);
+        line->end->setCoords(i, ySleeper);
+    }
+
+    for(auto it = sleeper.begin(); it != sleeper.end(); ++it)
+    {
+        if(it->absEnd <= it->absBegin)
+        {
+            qDebug() << "Неверные координаты шпалы: "
+                     << it->absBegin << "/" << it->absEnd << "; "
+                     << it->beginKM << "/" << it->beginM;
+            continue;
+        }
+        QCPItemLine *lineTop = new QCPItemLine(plot);
+        lineTop->setPen((QPen(Qt::red)));
+        lineTop->start->setCoords(it->absBegin, ySleeper + ySleeperDiff);
+        lineTop->end->setCoords(it->absEnd, ySleeper + ySleeperDiff);
+
+        QCPItemLine *lineBottom = new QCPItemLine(plot);
+        lineBottom->setPen((QPen(Qt::red)));
+        lineBottom->start->setCoords(it->absBegin, ySleeper - ySleeperDiff);
+        lineBottom->end->setCoords(it->absEnd, ySleeper - ySleeperDiff);
+
+
+        QCPItemLine *lineLeft = new QCPItemLine(plot);
+        lineLeft->setPen((QPen(Qt::red)));
+        lineLeft->start->setCoords(it->absBegin, ySleeper - ySleeperDiff);
+        lineLeft->end->setCoords(it->absBegin, ySleeper + ySleeperDiff);
+
+        QCPItemLine *lineRight = new QCPItemLine(plot);
+        lineRight->setPen((QPen(Qt::red)));
+        lineRight->start->setCoords(it->absEnd, ySleeper - ySleeperDiff);
+        lineRight->end->setCoords(it->absEnd, ySleeper + ySleeperDiff);
+//        for(int i = it->absBegin; i <= it->absEnd; i+= 50)
+//        {
+//            QCPItemLine *line1 = new QCPItemLine(plot);
+//            line1->start->setCoords(i - 2, ySleeper - ySleeperDiff);
+//            line1->end->setCoords(i - 2, ySleeper + ySleeperDiff);
+//            QCPItemLine *line2 = new QCPItemLine(plot);
+//            line2->start->setCoords(i, ySleeper - ySleeperDiff);
+//            line2->end->setCoords(i, ySleeper + ySleeperDiff);
+//            QCPItemLine *line3 = new QCPItemLine(plot);
+//            line3->start->setCoords(i + 2, ySleeper - ySleeperDiff);
+//            line3->end->setCoords(i + 2, ySleeper + ySleeperDiff);
+//        }
+    }
+}
+
 void Plot::changePosition(int absPos)
 {
     if(kmVec.isEmpty())
@@ -459,10 +527,14 @@ void Plot::changePosition(int absPos)
     plot->replot(QCustomPlot::rpQueuedReplot  );
 
 
+    using namespace QtConcurrent;
 
-    checkSPD(absPos);
-    checkPCH(absPos);
-    checkDistance(absPos);
+    QtConcurrent::run(this, &Plot::checkSPD, absPos);
+    QtConcurrent::run(this, &Plot::checkPCH, absPos);
+    QtConcurrent::run(this, &Plot::checkDistance, absPos);
+    //checkSPD(absPos);
+   // checkPCH(absPos);
+    //checkDistance(absPos);
 }
 
 
@@ -488,7 +560,9 @@ void Plot::changePosition(QString pos)
         emit error("Получена неверная координата: " + pos);
         return;
     }
-    changePosition(getAbsCoord(_km, _m));
+
+    if(_km != prevKm || _m != prevM)
+        changePosition(getAbsCoord(_km, _m));
 }
 
 void Plot::windowFocusChanged(bool isWindowOnFocus)

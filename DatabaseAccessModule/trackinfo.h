@@ -7,7 +7,7 @@
 
 struct TrackItem
 {
-    enum TrackItemType{ KM, STR, STAN, PCH, MOST, MOV, CUR, SPD} type;
+    enum TrackItemType{ KM, STR, STAN, PCH, MOST, MOV, CUR, SPD, SLEEPER} type;
 
     QString name;
     QString numb;

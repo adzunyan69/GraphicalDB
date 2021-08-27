@@ -12,6 +12,7 @@ struct RideInfo
     QString directionCode;
     QString trackNumber;
     QString trackCode;
+    QString GUID;
     bool increase;
 
     QString toString()
@@ -36,11 +37,12 @@ public:
     virtual RideInfo getRideInfo() = 0;
 signals:
     void currentPathCoordChanged(QString pathCoord);
+    void trackChanged();
 
 
 };
 
-
+// ATape
 class RideUpdateWorker : public RideUpdater
 {
     Q_OBJECT
@@ -51,19 +53,21 @@ private:
 
     RideInfo rideInfo;
     QTimer *timer = nullptr;
+    QTimer *guidTimer = nullptr;
 
     QString currentPathCoord;
 
     void parseRegInfoToRideInfo(ATapeRegistrationInfo &regInfo);
 public:
-    explicit RideUpdateWorker(QObject *parent = nullptr);
-    ~RideUpdateWorker();
+    explicit RideUpdateWorker(QObject *parent = nullptr) : RideUpdater(parent) { }
+    ~RideUpdateWorker() { }
     void setRegistryPathAndRideInfo(QString _registryPath);
     void startUpdating() override;
     RideInfo getRideInfo() override;
 
-public slots:
+private slots:
     void updatePathCoord();
+    void checkGUIDChange();
 
 };
 

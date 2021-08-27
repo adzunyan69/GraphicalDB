@@ -2,6 +2,7 @@
 #define PLOT_H
 
 #include <QObject>
+#include <QtConcurrent/QtConcurrent>
 #include "PlotModule/qcustomplot/qcustomplot.h"
 #include "DatabaseAccessModule/trackinfo.h"
 
@@ -53,9 +54,14 @@ class Plot : public QObject
     const double yPCH = 0.6;
     const double yPCHdiff = 0.1;
     const double yPos = ySTAN + 0.05;
+    const double ySleeper = 1.45; // Шпалы
+    const double ySleeperDiff = 0.03;
 
     const double ySPD = 0.7;
     const double ySPDdiff = 0.1;
+
+    int prevKm = 0;
+    int prevM = 0;
 
     bool reversed = false;
 
@@ -71,6 +77,7 @@ class Plot : public QObject
     void drawSTAN(const QVector<TrackItem> &stan);
     void drawCUR(const QVector<TrackItem> &cur);
     void drawSPD(const QVector<TrackItem> &spd);
+    void drawSLEEPER(const QVector<TrackItem> &sleeper);
 
 
     void checkSPD(int absPos);

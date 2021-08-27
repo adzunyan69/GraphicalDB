@@ -43,10 +43,6 @@ struct ATapeRegistrationInfo
     bool regStarted;
 };
 
-struct PIKParams
-{
-    
-};
 
 class ATapeRegistrationChecker : public QObject
 {

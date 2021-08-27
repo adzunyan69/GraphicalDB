@@ -1,9 +1,5 @@
 #include "ride.h"
 
-RideUpdateWorker::RideUpdateWorker(QObject *parent) : RideUpdater(parent)
-{
-
-}
 
 void RideUpdateWorker::setRegistryPathAndRideInfo(QString _registryPath)
 {
@@ -22,6 +18,9 @@ void RideUpdateWorker::setRegistryPathAndRideInfo(QString _registryPath)
 
 void RideUpdateWorker::parseRegInfoToRideInfo(ATapeRegistrationInfo &regInfo)
 {
+    rideInfo.GUID = regInfo.GUID;
+    rideInfo.directionCode = regInfo.DIR_CODE;
+    rideInfo.trackNumber = regInfo.TRACK_NUM;
     rideInfo.trackCode = regInfo.TRACK_CODE;
     rideInfo.increase = regInfo.INCREASE == "1" ? true : false;
     qDebug() << "Parse reg info: " << rideInfo.trackCode << " / " << rideInfo.increase;
@@ -50,9 +49,16 @@ void RideUpdateWorker::startUpdating()
     timer = new QTimer(this);
     timer->setInterval(1000);
 
+    if(guidTimer != nullptr)
+        delete guidTimer;
+    guidTimer = new QTimer(this);
+    guidTimer->setInterval(100);
+
     qDebug() << "Updating";
+    connect(guidTimer, SIGNAL(timeout()), this, SLOT(checkGUIDChange()));
     connect(timer, SIGNAL(timeout()), this, SLOT(updatePathCoord()));
     timer->start();
+    guidTimer->start();
 }
 
 void RideUpdateWorker::updatePathCoord()
@@ -64,8 +70,17 @@ void RideUpdateWorker::updatePathCoord()
     emit currentPathCoordChanged(currentPathCoord);
 }
 
-RideUpdateWorker::~RideUpdateWorker()
+void RideUpdateWorker::checkGUIDChange()
 {
-
+    if(registry != nullptr)
+    {
+        QString str = registry->value("path_name").toString();
+        if(registry->value("path_name").toString() != rideInfo.GUID)
+        {
+            qDebug() << "GUID changed.";
+            setRegistryPathAndRideInfo(registryPath);
+            emit trackChanged();
+        }
+    }
 }
 

@@ -54,7 +54,8 @@ int main(int argc, char *argv[])
 
     MainWindow w;
 
-    w.setRegistryInfo(QString("HKEY_CURRENT_USER\\") + QString(argv[1]));
+    w.setRegistryInfo(QString("HKEY_CURRENT_USER\\Software\\Radioavionika\\PAK NK\\Temp\\current"));
+    // w.setRegistryInfo(QString("HKEY_CURRENT_USER\\") + QString(argv[1]));
     w.drawPlot();
     w.startPathCoordUpdater();
     w.show();
