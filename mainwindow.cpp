@@ -3,8 +3,12 @@
 
 #define ATAPE_MODE
 
-#define DIR_CODE "14601"
-#define TRACK_NUM "1"
+#define DIR_CODE "10101"
+#define TRACK_NUM "2"
+//#define DIR_CODE "14601"
+//#define TRACK_NUM "1"
+// #define DIR_CODE "14831"
+// #define TRACK_NUM "12с"
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -12,34 +16,41 @@ MainWindow::MainWindow(QWidget *parent)
 {
     ui->setupUi(this);
 
-    connect(this, SIGNAL(error(QString)), this, SLOT(showErrorMessage(QString)));
+    connect(this, SIGNAL(error(QString)), this, SLOT(logErrorMsg(QString)));
 
     setupWindow();
 
-    qDebug() << "Start pathCoordUpdater";
+    qInfo() << "Start pathCoordUpdater";
     pathCoordUpdater = new RideUpdateWorker(this);
 
-    connect(&plot, SIGNAL(error(QString)), this, SLOT(showErrorMessage(QString)));
-     connect(pathCoordUpdater, SIGNAL(error(QString)), this, SLOT(showErrorMessage(QString)));
+    connect(&plot, SIGNAL(error(QString)), this, SLOT(logErrorMsg(QString)));
+    // connect(pathCoordUpdater, SIGNAL(error(QString)), this, SLOT(showErrorMessage(QString)));
 
-    qDebug() << "Setup plot";
+    qInfo() << "Setup plot";
     plot.setupPlot(ui->graphicalDatabase);
 
     connectObjects();
 
-
-
 }
 
-void MainWindow::showErrorMessage(QString msg)
+void MainWindow::logErrorMsg(QString msg)
 {
-    if(QMessageBox::warning(this, "Ошибка", msg, QMessageBox::Ok | QMessageBox::Close) == QMessageBox::Close)
+    qInfo() << msg;
+   //this->setWindowTitle(this->windowTitle().split('|').first() + " | [" + msg + "]");
+     if(QMessageBox::warning(this, "Ошибка", msg, QMessageBox::Ok | QMessageBox::Close) == QMessageBox::Close)
         exit(1);
+}
+
+void MainWindow::showCoordErrorMsg(QString msg)
+{
+   this->setWindowTitle(this->windowTitle().split('|').first() + " | [" + msg + "]");
+    // if(QMessageBox::warning(this, "Ошибка", msg, QMessageBox::Ok | QMessageBox::Close) == QMessageBox::Close)
+    //    exit(1);
 }
 
 void MainWindow::slotCustomMenuRequested(QPoint pos)
 {
-    qDebug() << "Context menu requested.";
+    qInfo() << "Context menu requested.";
     QMenu* menu = new QMenu(this);
     QAction* onTopToggle = new QAction("Поверх всех окон", menu);
     onTopToggle->setCheckable(true);
@@ -58,7 +69,7 @@ void MainWindow::slotCustomMenuRequested(QPoint pos)
 
 void MainWindow::slotOnTopToggle(bool isOnTop)
 {
-    qDebug() << "slotOnTopToggle";
+    qInfo() << "slotOnTopToggle";
     settings.write(Settings::WINDOW_ON_TOP, isOnTop, "WindowSettings");
 
     if(isOnTop == true)
@@ -91,7 +102,7 @@ void MainWindow::slotBdConvectorStart()
 
 void MainWindow::focusChanged(QWidget* old, QWidget* now)
 {
-    qDebug() << "Focus changed from " << old << " to " << now;
+    qInfo() << "Focus changed from " << old << " to " << now;
     if(now == nullptr)
         emit windowFocusChanged(false);
     else
@@ -135,7 +146,7 @@ void MainWindow::createDefaultSettings()
 
 void MainWindow::setWindowGeometry()
 {
-    qDebug() << "MainWindow()";
+    qInfo() << "MainWindow()";
 
     if(settings.read(Settings::WINDOW_ON_TOP, "WindowSettings").toString() == "true")
         this->setWindowFlag(Qt::WindowStaysOnTopHint);
@@ -156,18 +167,18 @@ void MainWindow::setWindowGeometry()
         }
         else
         {
-            qDebug() << "Error: converting from QVariant to Int (geometry).";
+            qInfo() << "Error: converting from QVariant to Int (geometry).";
             emit error("Ошибка при получении параметров окна из файла настроек.");
         }
     }
     else
     {
-        qDebug() << "Error: reading geometry settings.";
+        qInfo() << "Error: reading geometry settings.";
         emit error("Ошибка чтения параметров окна из настроек.");
     }
 
 
-    qDebug() << "Window geometry " << this->geometry();
+    qInfo() << "Window geometry " << this->geometry();
 }
 
 void MainWindow::setWindowsWidgets()
@@ -176,18 +187,30 @@ void MainWindow::setWindowsWidgets()
     pchLabel = new QLabel(this);
     coordLabel = new QLabel(this);
     distanceLabel = new QLabel(this);
+    sleeperLabel = new QLabel(this);
+    bondingLabel = new QLabel(this);
+    railLabel = new QLabel(this);
     spdLabel->setText("[Скорости]");
     spdLabel->setMinimumWidth(150);
-    pchLabel->setText("[ПЧ]");
+    pchLabel->setText("[Дистанция пути]");
     pchLabel->setMinimumWidth(50);
     coordLabel->setText("[Координата]");
-    coordLabel->setMinimumWidth(150);
+    coordLabel->setMinimumWidth(200);
     distanceLabel->setText("[Перегон]");
-    distanceLabel->setMinimumWidth(150);
+    distanceLabel->setMinimumWidth(200);
+    sleeperLabel->setText("[Шпалы]");
+    sleeperLabel->setMinimumWidth(150);
+    bondingLabel->setText("[Скрепление]");
+    bondingLabel->setMinimumWidth(150);
+    railLabel->setText("[Рельсы]");
+    railLabel->setMinimumWidth(150);
     ui->statusbar->addWidget(spdLabel);
     ui->statusbar->addWidget(pchLabel);
     ui->statusbar->addWidget(coordLabel);
     ui->statusbar->addWidget(distanceLabel);
+    ui->statusbar->addWidget(sleeperLabel);
+    ui->statusbar->addWidget(bondingLabel);
+    ui->statusbar->addWidget(railLabel);
 }
 
 void MainWindow::connectObjects()
@@ -206,6 +229,9 @@ void MainWindow::connectObjects()
     connect(&plot, SIGNAL(spdChanged(QString)), this, SLOT(spdChange(QString)));
     connect(&plot, SIGNAL(pchChanged(QString)), this, SLOT(pchChange(QString)));
     connect(&plot, SIGNAL(distanceChanged(QString)), this, SLOT(distanceChange(QString)));
+    connect(&plot, SIGNAL(sleeperChanged(QString)), this, SLOT(sleeperChange(QString)));
+    connect(&plot, SIGNAL(bondingChanged(QString)), this, SLOT(bondingChange(QString)));
+    connect(&plot, SIGNAL(railChanged(QString)), this, SLOT(railChange(QString)));
 
 
     ui->graphicalDatabase->setContextMenuPolicy(Qt::CustomContextMenu);
@@ -219,29 +245,29 @@ void MainWindow::drawPlot()
 
     getItemsMap();
 
-    qDebug() << "Drawing plot";
+    qInfo() << "Drawing plot";
     QTime time = QTime::currentTime();
     plot.drawObjects(itemsMap);
 
 
 
-    qDebug() << "Full time for drawing graphical database: " << time.msecsTo(QTime::currentTime()) << " ms";
+    qInfo() << "Full time for drawing graphical database: " << time.msecsTo(QTime::currentTime()) << " ms";
 }
 
 void MainWindow::getItemsMap()
 {
-    qDebug() << "Getting items from db";
+    qInfo() << "Getting items from db";
     QTime time =  QTime::currentTime();
 
     TrackInfo trackInfo;
 
-    connect(&trackInfo, SIGNAL(error(QString)), this, SLOT(showErrorMessage(QString)));
+    connect(&trackInfo, SIGNAL(error(QString)), this, SLOT(errorLogMsg(QString)));
 
     QString database = settings.read(Settings::DATABASE_PATH, "Settings").toString();
-    qDebug() << "DB / SQL: " << database << "  / " << (QApplication::applicationDirPath() + "/sql");
+    qInfo() << "DB / SQL: " << database << "  / " << (QApplication::applicationDirPath() + "/sql");
     if(trackInfo.setAndOpenDatabase(database, QApplication::applicationDirPath() + "/sql") == false)
     {
-        qDebug() << "Error while opening database";
+        qInfo() << "Error while opening database";
         error("Ошибка при открытии базы: " + database);
         if(QMessageBox::question(this, "Обновить БД?", "Запустить конвертор для обновления БД?") == QMessageBox::Yes)
             slotBdConvectorStart();
@@ -249,7 +275,7 @@ void MainWindow::getItemsMap()
     }
 
 #ifdef ATAPE_MODE
-    qDebug() << "RegInfo: " << pathCoordUpdater->getRideInfo().toString();
+    qInfo() << "RegInfo: " << pathCoordUpdater->getRideInfo().toString();
 //    trackInfo.setDirInfo(DIR_CODE, TRACK_NUM);
 //    plot.setReversed(true);
     trackInfo.setAssetNum(pathCoordUpdater->getRideInfo().trackCode);
@@ -266,11 +292,13 @@ void MainWindow::getItemsMap()
     plot.setReversed(false);
 #endif
     itemsMap = trackInfo.getItemsMap();
+    qInfo() << "Sizeof: " << sizeof(itemsMap);
     if(itemsMap.isEmpty())
         emit error("Не было получено объектов из БД.");
-    this->setWindowTitle(trackInfo.getDirCode() + " - " + trackInfo.getTrackNum() + ", " + trackInfo.getDirName());
+    if(this->windowTitle().split('|').size() != 2)
+        this->setWindowTitle(trackInfo.getDirCode() + " - " + trackInfo.getTrackNum() + ", " + trackInfo.getDirName());
 
-    qDebug() << "Full time for getting objects: " << time.msecsTo(QTime::currentTime()) << " ms";
+    qInfo() << "Full time for getting objects: " << time.msecsTo(QTime::currentTime()) << " ms";
 }
 
 void MainWindow::positionChange()
@@ -282,26 +310,47 @@ void MainWindow::positionChange()
 
 void MainWindow::spdChange(QString spd)
 {
-    qDebug() << "spdChange: " << spd;
-    spdLabel->setText("Скорости;Скорости ВСК: " + spd);
+    qInfo() << "spdChange: " << spd;
+    spdLabel->setText("[Скорости]: " + spd);
 }
 
 void MainWindow::pchChange(QString pch)
 {
-    qDebug() << "pchChange: " << pch;
-    pchLabel->setText("Дистанция пути: " + pch);
+    qInfo() << "pchChange: " << pch;
+    pchLabel->setText("[Дистанция пути]: " + pch);
 }
 
 
 void MainWindow::coordChange(int coord)
 {
-    coordLabel->setText("Абсолютная координата: " + QString::number(coord));
+    coordLabel->setText(
+                QString("[Путейская]: %1 [Абс.]: %2]")
+                .arg(pathCoordUpdater->getCurPathCoord())
+                .arg(QString::number(coord)));
 }
 
 void MainWindow::distanceChange(QString distance)
 {
-    qDebug() << "distance change: " << distance;
-    distanceLabel->setText("Перегон: " + distance);
+    qInfo() << "distance change: " << distance;
+    distanceLabel->setText("[Перегон]: " + distance);
+}
+
+void MainWindow::sleeperChange(QString sleeper)
+{
+    qInfo() << "sleeper change: " << sleeper;
+    sleeperLabel->setText("[Шпалы]: " + sleeper);
+}
+
+void MainWindow::bondingChange(QString bonding)
+{
+    qInfo() << "bonding change: " << bonding;
+    bondingLabel->setText("[Тип скрепления]: " + bonding);
+}
+
+void MainWindow::railChange(QString rail)
+{
+    qInfo() << "rail change: " << rail;
+    railLabel->setText("[Тип рельс]: " + rail);
 }
 
 MainWindow::~MainWindow()
@@ -315,15 +364,15 @@ void MainWindow::setRegistryInfo(QString pathToReg)
     pathToReg = "HKEY_CURRENT_USER\\SOFTWARE\\Radioavionika\\PAK NK\\Temp\\current";
 #endif
 
-    qDebug() << "Set Registry Info";
+    qInfo() << "Set Registry Info";
     if(pathCoordUpdater == nullptr)
     {
-        qDebug() << "Error: path coordinate updater is nullptr";
+        qInfo() << "Error: path coordinate updater is nullptr";
         emit error("Ошибка инициализации объекта для проверки координаты.");
         return;
     }
     static_cast<RideUpdateWorker*>(pathCoordUpdater)->setRegistryPathAndRideInfo(pathToReg);
-    qDebug() << "Registry info: " <<
+    qInfo() << "Registry info: " <<
                 pathCoordUpdater->getRideInfo().toString();
 
 }
@@ -331,11 +380,11 @@ void MainWindow::setRegistryInfo(QString pathToReg)
 void MainWindow::startPathCoordUpdater()
 {
 #ifdef ATAPE_MODE
-    qDebug() << "Start PathCoordUpdater";
+    qInfo() << "Start PathCoordUpdater";
     if(pathCoordUpdater == nullptr)
     {
         emit error("Ошибка инициализации объекта для проверки координаты.");
-        qDebug() << "Error: path coordinate updater is nullptr";
+        qInfo() << "Error: path coordinate updater is nullptr";
         return;
     }
     pathCoordUpdater->startUpdating();
@@ -346,25 +395,37 @@ void MainWindow::startPathCoordUpdater()
 
 void MainWindow::currentPathCoordUpdate(QString pathCoord)
 {
-    bool isCorrectPathCoord;
-    km = pathCoord.split(";").first().toInt(&isCorrectPathCoord);
-    if(isCorrectPathCoord == false)
-    {
+    static bool isPrevPathCoordCorrect{ true };
+    static bool isCurrentPathCoordCorrect{ false };
 
-        qDebug() << "Invalid path coord: km";
-        emit error("Получена неверная путейская координата в реестре: " + pathCoord);
+    bool isCorrectKm, isCorrectM{ false };
+
+    auto splittedPathCoord = pathCoord.split(';');
+    if(splittedPathCoord.size() != 2)
+        isCurrentPathCoordCorrect = false;
+    else {
+        km = splittedPathCoord.first().toInt(&isCorrectKm);
+        m = splittedPathCoord.at(1).toInt(&isCorrectM) / 1000;
+
+        isCurrentPathCoordCorrect = isCorrectKm && isCorrectM;
+    }
+
+    if(isPrevPathCoordCorrect == false && isCurrentPathCoordCorrect == false)
+        return;
+
+    if(isPrevPathCoordCorrect == true && isCurrentPathCoordCorrect == false)
+    {
+        showCoordErrorMsg("Путейская координата недоступна");
+        coordLabel->setText("[Путейская]: недоступна");
+        isPrevPathCoordCorrect = isCurrentPathCoordCorrect;
         return;
     }
 
-    m = pathCoord.split(";").at(1).toInt(&isCorrectPathCoord) / 1000;
-    if(isCorrectPathCoord == false)
-    {
-        qDebug() << "Invalid path coord: m";
-        emit error("Получена неверная путейская координата в реестре: " + pathCoord);
-        return;
-    }
+    if(isPrevPathCoordCorrect == false && isCurrentPathCoordCorrect == true)
+        this->setWindowTitle(this->windowTitle().split('|').first());
 
-    coordLabel->setText(QString::number(km) + " км " + QString::number(m) + " м");
+    isPrevPathCoordCorrect = isCurrentPathCoordCorrect;
+    coordLabel->setText("[Путейская]: " + QString::number(km) + " км " + QString::number(m) + " м");
 }
 
 void MainWindow::redrawTrack()

@@ -32,6 +32,9 @@ private:
     QLabel *pchLabel;
     QLabel *coordLabel;
     QLabel *distanceLabel;
+    QLabel *sleeperLabel;
+    QLabel *bondingLabel;
+    QLabel *railLabel;
 
     RideUpdater *pathCoordUpdater = nullptr;
     Plot plot;
@@ -69,9 +72,13 @@ public slots:
     void spdChange(QString);
     void pchChange(QString);
     void distanceChange(QString);
+    void sleeperChange(QString);
+    void bondingChange(QString);
+    void railChange(QString rail);
     void coordChange(int);
 
-    void showErrorMessage(QString msg);
+    void logErrorMsg(QString msg);
+    void showCoordErrorMsg(QString msg);
 
 };
 #endif // MAINWINDOW_H

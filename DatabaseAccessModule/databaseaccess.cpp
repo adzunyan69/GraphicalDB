@@ -5,7 +5,7 @@ DatabaseAccess::DatabaseAccess(QObject *parent) : QObject(parent)
     db = QSqlDatabase::database();
     if(db.isValid() == false)
     {
-        qDebug() << "Add database SQLITE";
+        qInfo() << "Add database SQLITE";
         db = QSqlDatabase::addDatabase("QSQLITE");
         if(db.isValid() == false)
         {
@@ -17,7 +17,7 @@ DatabaseAccess::DatabaseAccess(QObject *parent) : QObject(parent)
 
 DatabaseAccess::~DatabaseAccess()
 {
-    qDebug() << "Closing database";
+    qInfo() << "Closing database";
     db.close();
 }
 
@@ -25,13 +25,13 @@ bool DatabaseAccess::openDatabase(QString databasePath)
 {
     if(QFile::exists(databasePath) != true)
     {
-        qDebug() << "Не существует файла БД.";
+        qInfo() << "Не существует файла БД.";
         emit error("Файл базы данных не существует: " + databasePath);
         return false;
     }
     if(db.isValid() == false)
     {
-        qDebug() << "Database is not valid";
+        qInfo() << "Database is not valid";
         emit error("Ошибка: db.isValid().");
         return false;
     }
@@ -52,12 +52,12 @@ QSqlQuery DatabaseAccess::execQueryString(const QString &query)
 
     QSqlQuery q(db);
     q.setForwardOnly(true);
-    qDebug() << "Query: " << query;
+    qInfo() << "Query: " << query;
 
     bool isSuccess = q.exec(query);
     if(isSuccess == false)
     {
-        qDebug() << q.lastError();
+        qInfo() << q.lastError();
         emit error("Ошибка выпонления запроса " + query + "\nТекст ошибки: " + q.lastError().text());
     }
 
@@ -69,12 +69,12 @@ QSqlQuery DatabaseAccess::execQueryFile(const QString &filePath)
     if(DBExist() == false)
         return QSqlQuery();
 
-    qDebug() << "Sql file path: " << filePath;
+    qInfo() << "Sql file path: " << filePath;
     QFile queryFile(filePath);
     if(queryFile.exists() != true)
     {
-        qDebug() << "Error: file does not exist";
-        qDebug() << filePath;
+        qInfo() << "Error: file does not exist";
+        qInfo() << filePath;
         emit error("Ошибка выполнения запроса из файла " + filePath + " - файл не существует.");
         return QSqlQuery();
     }
@@ -92,18 +92,18 @@ QSqlQuery DatabaseAccess::execQueryStringBind(const QString &query, const QMap<Q
 
     QSqlQuery q(db);
     q.setForwardOnly(true);
-    qDebug() << "Query: " << query;
+    qInfo() << "Query: " << query;
 
     q.prepare(query);
 
     for(auto it = bindValues.begin(); it != bindValues.end(); ++it)
     {
-        // qDebug() << "Bind " << it.key() << " with " << it.value().toString();
+        // qInfo() << "Bind " << it.key() << " with " << it.value().toString();
         q.bindValue(it.key(), it.value());
     }
     if(q.exec() != true)
     {
-        qDebug() << q.lastError().text();
+        qInfo() << q.lastError().text();
         emit error("Ошибка выполнения запроса " + query + "\nТекст ошибки: " + q.lastError().text());
     }
 
@@ -119,12 +119,12 @@ QSqlQuery DatabaseAccess::execQueryFileBind(const QString filePath, const QMap<Q
     if(DBExist() == false)
         return QSqlQuery();
 
-    qDebug() << "Sql file path: " << filePath;
+    qInfo() << "Sql file path: " << filePath;
     QFile queryFile(filePath);
     if(queryFile.exists() != true)
     {
-        qDebug() << "Error: file does not exist";
-        qDebug() << filePath;
+        qInfo() << "Error: file does not exist";
+        qInfo() << filePath;
         emit error("Ошибка выполнения запроса из файла " + filePath + " - файл не существует.");
         return QSqlQuery();
     }

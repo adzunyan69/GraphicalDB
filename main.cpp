@@ -33,21 +33,21 @@ int main(int argc, char *argv[])
         logMessageBeforeStartup(QString(argv[i]));
     }
 
-    if(argc != 2 || !argv[1])
-    {
-        logMessageBeforeStartup("Usage; program <path to reg>");
-        qDebug() << "Usage: program <path to reg>";
-        showErrorMessageBeforeStartup("Ошибка при запуске приложения: не был получен путь к ветке реестра (неверный список или количеств аргументов).");
-        return 1;
-    }
+//    if(argc != 2 || !argv[1])
+//    {
+//        logMessageBeforeStartup("Usage; program <path to reg>");
+//        qInfo() << "Usage: program <path to reg>";
+//        showErrorMessageBeforeStartup("Ошибка при запуске приложения: не был получен путь к ветке реестра (неверный список или количеств аргументов).");
+//        return 1;
+//    }
 
-    if(strstr(argv[1], "Software") != argv[1])
-    {
-        logMessageBeforeStartup("Invalid path to registry");
-        qDebug() << "Invalid path to registry";
-        showErrorMessageBeforeStartup("Неверная ветка реестра");
-        return 1;
-    }
+//    if(strstr(argv[1], "Software") != argv[1])
+//    {
+//        logMessageBeforeStartup("Invalid path to registry");
+//        qInfo() << "Invalid path to registry";
+//        showErrorMessageBeforeStartup("Неверная ветка реестра");
+//        return 1;
+//    }
 
     logMessageBeforeStartup("Argv is ok");
 

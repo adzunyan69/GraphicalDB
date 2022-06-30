@@ -15,12 +15,12 @@ void ATapeRegistrationChecker::parsePassport(bool debugMode)
     else
         filePath = registrationInfo.fullPathToPassport; //QDir::currentPath() + "/log/ATapeLog/" + registrationInfo.passportFilename + ".xml";
 
-    qDebug() << "Passport path: " << filePath;
+    qInfo() << "Passport path: " << filePath;
     QFile file(filePath);
     if(!file.exists())
     {
         error = "Файл паспорта не существует (либо не сохранен): " + filePath + "";
-        qDebug() << error;
+        qInfo() << error;
         return;
     }
     file.open(QFile::ReadOnly);
@@ -32,7 +32,7 @@ void ATapeRegistrationChecker::parsePassport(bool debugMode)
     {
 
         error = "Ошибка создания DOM-документа (XML-структуры).";
-        qDebug() << error;
+        qInfo() << error;
         return;
     }
 
@@ -64,7 +64,7 @@ void ATapeRegistrationChecker::parsePassport(bool debugMode)
         dataNode = dataNode.nextSibling();
     }
 
-    qDebug() << "RegistrationInfo: " << "\n"
+    qInfo() << "RegistrationInfo: " << "\n"
              << "DIR_CODE: " << registrationInfo.DIR_CODE << "\n"
              << "TRACK_NUM: LATIN1" << registrationInfo.TRACK_NUM << "\n"
              << "TRACK_CODE: " << registrationInfo.TRACK_CODE << "\n"
@@ -83,7 +83,7 @@ void ATapeRegistrationChecker::savePassportLog()
 {
     // Временное сохранение бекап-файла паспорта
     QFile file(QDir::currentPath() + "/log/ATapeLog/" + registrationInfo.passportFilename + ".xml");
-    qDebug() << "Паспорт сохранен: " << file.fileName();
+    qInfo() << "Паспорт сохранен: " << file.fileName();
     file.open(QFile::WriteOnly);
     QTextStream out(&file);
     out.flush();

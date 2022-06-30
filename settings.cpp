@@ -2,9 +2,9 @@
 
 Settings::Settings(QString filename)
 {
-    qDebug() << "Создание класса настроек";
+    qInfo() << "Создание класса настроек";
     settings = new QSettings (QCoreApplication::applicationDirPath() + "/" + filename, QSettings::IniFormat);
-    qDebug() << "Файл: " << QCoreApplication::applicationDirPath() + "/" + filename;
+    qInfo() << "Файл: " << QCoreApplication::applicationDirPath() + "/" + filename;
 
     settingsMap[WINDOW_ON_TOP] = "WindowOnTop";
     settingsMap[WINDOW_WIDTH] = "WindowWidth";
@@ -18,7 +18,7 @@ Settings::Settings(QString filename)
     QVariant firstRunValue = settings->value("General/firstRun");
     if(!firstRunValue.isValid())
     {
-        qDebug() << "Первый запуск приложения";
+        qInfo() << "Первый запуск приложения";
         // Первый запуск приложения
         settings->setValue("General/firstRun", false);
 
@@ -30,21 +30,21 @@ Settings::Settings(QString filename)
 
 Settings::~Settings()
 {
-    qDebug() << "Удаление объекта настроек";
+    qInfo() << "Удаление объекта настроек";
     delete settings;
 }
 
 
 void Settings::write(parametr param, const QVariant &value, const QString &section)
 {
-    qDebug() << "Установка параметра " << section << "/" << settingsMap[param] << ", значение " << value;
+    qInfo() << "Установка параметра " << section << "/" << settingsMap[param] << ", значение " << value;
     settings->setValue(section + "/" + settingsMap[param], value);
-    qDebug() << "Обновление настроек";
+    qInfo() << "Обновление настроек";
     settings->sync();
 }
 
 QVariant Settings::read(parametr param, const QString section)
 {
-    qDebug() << "Чтение параметра " << param << " / " << section;
+    qInfo() << "Чтение параметра " << param << " / " << section;
     return settings->value(section + "/" + settingsMap[param]);
 }

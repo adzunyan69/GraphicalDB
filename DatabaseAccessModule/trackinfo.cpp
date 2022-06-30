@@ -9,26 +9,26 @@ TrackInfo::TrackInfo(QObject *parent) : QObject(parent)
 
 void TrackInfo::errorFromDBA(QString msg)
 {
-    qDebug() << "Error from dba: " << msg;
+    qInfo() << "Error from dba: " << msg;
     emit error(msg);
 }
 
 void TrackInfo::setAssetNum(QString _assetNum)
 {
-    qDebug() << "AssetNum: " << _assetNum;
+    qInfo() << "AssetNum: " << _assetNum;
     if(_assetNum.isEmpty() == true)
     {
-        qDebug() << "Error: assetNum is empty";
+        qInfo() << "Error: assetNum is empty";
         emit error("Ошибка: код пути пуст.");
         return;
     }
 
-    if(_assetNum.size() <= 5)
-    {
-        qDebug() << "Error: assetNum <= 5";
-        emit error("Ошибка: некорректный код пути (" + _assetNum + "). Отредактируйте дерево проездов.");
-        return;
-    }
+//    if(_assetNum.size() <= 5)
+//    {
+//        qInfo() << "Error: assetNum <= 5";
+//        emit error("Ошибка: некорректный код пути (" + _assetNum + "). Отредактируйте дерево проездов.");
+//        return;
+//    }
     QMap<QString, QVariant> bindValue;
     bindValue.insert(":ASSET_NUM", _assetNum);
 
@@ -39,19 +39,19 @@ void TrackInfo::setAssetNum(QString _assetNum)
 
     if(query.size() == 0)
     {
-        qDebug() << "Error: assetNum isn't exist";
+        qInfo() << "Error: assetNum isn't exist";
         emit error("Ошибка: код пути " + _assetNum + " не был найден в базе данных.");
         return;
     }
     query.first();
     setDirInfo(query.value("KOD").toString(), query.value("PUT").toString());
 
-    qDebug() << dirCode << " " << trackNum;
+    qInfo() << dirCode << " " << trackNum;
 }
 
 void TrackInfo::setDirInfo(QString _dirCode, QString _trackNum)
 {
-    qDebug() << "DirCode: " << _dirCode << ", trackNum: " << _trackNum;
+    qInfo() << "DirCode: " << _dirCode << ", trackNum: " << _trackNum;
     dirCode = _dirCode;
     trackNum = _trackNum;
 
@@ -60,8 +60,8 @@ void TrackInfo::setDirInfo(QString _dirCode, QString _trackNum)
     QSqlQuery query = dba.execQueryFileBind(sqlPath + "/WAY.sql", bindValue);
     if(query.first() == false)
     {
-        qDebug() << "Error while getting dirName";
-        qDebug() << query.lastError();
+        qInfo() << "Error while getting dirName";
+        qInfo() << query.lastError();
         emit error("Ошибка при выполнении запроса для конвертации кода пути в код направления и номер пути (" +
                    _dirCode + ", " + _trackNum + "\nТекст ошибки: " + query.lastError().text());
     }
@@ -73,8 +73,8 @@ bool TrackInfo::setAndOpenDatabase(QString databaseName, QString _sqlPath)
 {
     if(dba.openDatabase(databaseName) == false)
     {
-        qDebug() << "Error: database error";
-        qDebug() << dba.lastError();
+        qInfo() << "Error: database error";
+        qInfo() << dba.lastError();
         // emit error("Ошибка при открытии БД: " + dba.lastError());
         return false;
     }
@@ -88,13 +88,13 @@ QVector<TrackItem> TrackInfo::getVec(QString sqlName)
     QTime time = QTime::currentTime();
     QVector<TrackItem> result;
     QMap<QString, QVariant> bindValue;
-    qDebug() << "Sql path: " << sqlName;
+    qInfo() << "Sql path: " << sqlName;
     if(dirCode.isEmpty() && trackNum.isEmpty())
     {
-        qDebug() << "dir Code && track Num is empty";
+        qInfo() << "dir Code && track Num is empty";
         if(assetNum.isEmpty() == true)
         {
-            qDebug() << "Asset num is empty";
+            qInfo() << "Asset num is empty";
             // emit error("Отсутствует код пути и код направления.");
             return result;
         }
@@ -109,7 +109,7 @@ QVector<TrackItem> TrackInfo::getVec(QString sqlName)
 
     if(query.first() == false)
     {
-        qDebug() << sqlName << " - нет данных";
+        qInfo() << sqlName << " - нет данных";
         return QVector<TrackItem>();
     }
     do
@@ -170,6 +170,22 @@ QVector<TrackItem> TrackInfo::getVec(QString sqlName)
             item.endM = query.value("E_M").toInt();
 
         }
+        else if(objType == "OVR")
+        {
+            item.type = TrackItem::OVR;
+            item.beginKM = query.value("B_KM").toInt();
+            item.beginM = query.value("B_M").toInt();
+            item.endKM = query.value("E_KM").toInt();
+            item.endM = query.value("E_M").toInt();
+        }
+        else if(objType == "TNL")
+        {
+            item.type = TrackItem::TNL;
+            item.beginKM = query.value("B_KM").toInt();
+            item.beginM = query.value("B_M").toInt();
+            item.endKM = query.value("E_KM").toInt();
+            item.endM = query.value("E_M").toInt();
+        }
         else if(objType == "CUR")
         {
             item.type = TrackItem::CUR;
@@ -206,19 +222,50 @@ QVector<TrackItem> TrackInfo::getVec(QString sqlName)
         {
             item.type = TrackItem::SLEEPER;
 
+            item.name = query.value("NAME").toString();
+
             item.beginKM = query.value("B_KM").toInt();
             item.beginM = query.value("B_M").toInt();
             item.endKM = query.value("E_KM").toInt();
             item.endM = query.value("E_M").toInt();
 
         }
+        else if(objType == "BND")
+        {
+            item.type = TrackItem::BONDING;
+
+            item.numb = query.value("NUMB").toString();
+
+            item.beginKM = query.value("B_KM").toInt();
+            item.beginM = query.value("B_M").toInt();
+            item.endKM = query.value("E_KM").toInt();
+            item.endM = query.value("E_M").toInt();
+        }
+        else if(objType == "RAL")
+        {
+            item.type = TrackItem::RAIL;
+
+            item.numb = query.value("NUMB").toString();
+
+            item.beginKM = query.value("B_KM").toInt();
+            item.beginM = query.value("B_M").toInt();
+            item.endKM = query.value("E_KM").toInt();
+            item.endM = query.value("E_M").toInt();
+        }
+        else if(objType == "ISO")
+        {
+            item.type = TrackItem::ISO;
+
+            item.oKM = query.value("O_KM").toInt();
+            item.oM = query.value("O_M").toInt();
+        }
 
         result.push_back(item);
     } while(query.next());
 
 
-    qDebug() << "Query time: " << time.msecsTo(QTime::currentTime()) << " ms";
-    qDebug() << "Query  " << sqlName << " size: " << result.size();
+    qInfo() << "Query time: " << time.msecsTo(QTime::currentTime()) << " ms";
+    qInfo() << "Query  " << sqlName << " size: " << result.size();
 
     return result;
 
@@ -243,12 +290,22 @@ QMap<TrackItem::TrackItemType, QVector<TrackItem>> TrackInfo::getItemsMap()
     calculateAbsCoord(most, km);
     QVector<TrackItem> mov =  getVec( "/MOV.sql");
     calculateAbsCoord(mov, km);
+    QVector<TrackItem> ovr =  getVec( "/OVERPASS.sql");
+    calculateAbsCoord(ovr, km);
+    QVector<TrackItem> tnl =  getVec( "/TUNNEL.sql");
+    calculateAbsCoord(tnl, km);
     QVector<TrackItem> cur =  getVec( "/CUR.sql");
     calculateAbsCoord(cur, km);
     QVector<TrackItem> spd =  getVec( "/SPD.sql");
     calculateAbsCoord(spd, km);
-    // QVector<TrackItem> sleeper = getVec("/SLEEPER.sql");
-    // calculateAbsCoord(sleeper, km);
+    QVector<TrackItem> sleeper = getVec("/SLEEPER.sql");
+    calculateAbsCoord(sleeper, km);
+    QVector<TrackItem> bonding = getVec("/BONDING.sql");
+    calculateAbsCoord(bonding, km);
+    QVector<TrackItem> rail = getVec("/RAIL.sql");
+    calculateAbsCoord(rail, km);
+    QVector<TrackItem> iso = getVec("/ISO.sql");
+    calculateAbsCoord(iso, km);
 
 //    std::sort(str.begin(), str.end());
 //    std::sort(cur.begin(), cur.end());
@@ -260,10 +317,15 @@ QMap<TrackItem::TrackItemType, QVector<TrackItem>> TrackInfo::getItemsMap()
     itemsMap.insert(TrackItem::PCH, pch);
     itemsMap.insert(TrackItem::MOST, most);
     itemsMap.insert(TrackItem::MOV, mov);
+    itemsMap.insert(TrackItem::OVR, ovr);
+    itemsMap.insert(TrackItem::TNL, tnl);
     itemsMap.insert(TrackItem::CUR, cur);
     itemsMap.insert(TrackItem::SPD, spd);
-    // itemsMap.insert(TrackItem::SLEEPER, sleeper);
-    qDebug() << "Time for insert: " << time.msecsTo(QTime::currentTime());
+    itemsMap.insert(TrackItem::SLEEPER, sleeper);
+    itemsMap.insert(TrackItem::BONDING, bonding);
+    itemsMap.insert(TrackItem::RAIL, rail);
+    itemsMap.insert(TrackItem::ISO, iso);
+    qInfo() << "Time for insert: " << time.msecsTo(QTime::currentTime());
     return itemsMap;
 }
 
@@ -271,7 +333,7 @@ void TrackInfo::calculateAbsCoordForKm(QVector<TrackItem> &km)
 {
 
     QTime time = QTime::currentTime();
-    qDebug() << "Calculate Abs Coord For Km";
+    qInfo() << "Calculate Abs Coord For Km";
 
     int absCoord = -1;
 
@@ -281,20 +343,20 @@ void TrackInfo::calculateAbsCoordForKm(QVector<TrackItem> &km)
         absCoord += it->len;
         it->absEnd = absCoord;
 #ifdef debug_info
-        qDebug() << "Km: " << it->km << "; Begin: " << it->beginM << "/" << it->absBegin << "; End: " << it->endM << "/" << it->absEnd << "; Len: " << it->len;
+        qInfo() << "Km: " << it->km << "; Begin: " << it->beginM << "/" << it->absBegin << "; End: " << it->endM << "/" << it->absEnd << "; Len: " << it->len;
     #endif
     }
-    qDebug() << "Time km: " << time.msecsTo(QTime::currentTime());
+    qInfo() << "Time km: " << time.msecsTo(QTime::currentTime());
 }
 
 void TrackInfo::calculateAbsCoord(QVector<TrackItem> &trackItems, QVector<TrackItem> &km)
 {
     if(trackItems.isEmpty())
     {
-        qDebug() << "Нет данных для вычисления абсолютной координаты";
+        qInfo() << "Нет данных для вычисления абсолютной координаты";
         return;
     }
-    qDebug() << "Calculate Abs Coord";
+    qInfo() << "Calculate Abs Coord";
     QTime time = QTime::currentTime();
     if(trackItems.first().type == TrackItem::STR)
     {
@@ -302,7 +364,7 @@ void TrackInfo::calculateAbsCoord(QVector<TrackItem> &trackItems, QVector<TrackI
         {
             it->absBegin = getAbsCoord(km, it->beginKM, it->beginM);
 #ifdef debug_info
-            qDebug() << "Str: Begin: " << it->beginKM << "km " << it->beginM
+            qInfo() << "Str: Begin: " << it->beginKM << "km " << it->beginM
                      << " Abs Begin: " << it->absBegin << " numb: " << it->numb;
 #endif
         }
@@ -315,7 +377,7 @@ void TrackInfo::calculateAbsCoord(QVector<TrackItem> &trackItems, QVector<TrackI
             it->absO = getAbsCoord(km, it->oKM, it->oM);
             it->absEnd = getAbsCoord(km, it->endKM, it->endM);
 #ifdef debug_info
-             qDebug() << "Stan: " << it->name << "; Begin" << it->beginKM << "km " << it->beginM << "m; " << "Os: " << it->oKM << " km " << it->oM << "m; End: " << it->endKM << " km " << it->endM << " m; "
+             qInfo() << "Stan: " << it->name << "; Begin" << it->beginKM << "km " << it->beginM << "m; " << "Os: " << it->oKM << " km " << it->oM << "m; End: " << it->endKM << " km " << it->endM << " m; "
                     << " Abs Begin: " << it->absBegin << "; Abs Os: " << it->absO << "; Abs End: " << it->absEnd;
 #endif
         }
@@ -327,7 +389,7 @@ void TrackInfo::calculateAbsCoord(QVector<TrackItem> &trackItems, QVector<TrackI
             it->absBegin = getAbsCoord(km, it->beginKM, it->beginM);
             it->absEnd = getAbsCoord(km, it->endKM, it->endM);
 #ifdef debug_info
-             qDebug() << "Pch: Begin" << it->beginKM << "km " << it->beginM << "m; End: " << it->endKM << " km " << it->endM << " m; "
+             qInfo() << "Pch: Begin" << it->beginKM << "km " << it->beginM << "m; End: " << it->endKM << " km " << it->endM << " m; "
                      << " Abs Begin: " << it->absBegin  << "; Abs End: " << it->absEnd;
 #endif
         }
@@ -339,7 +401,7 @@ void TrackInfo::calculateAbsCoord(QVector<TrackItem> &trackItems, QVector<TrackI
             it->absBegin = getAbsCoord(km, it->beginKM, it->beginM);
             it->absEnd = getAbsCoord(km, it->endKM, it->endM);
 #ifdef debug_info
-            qDebug() << "Most: Begin" << it->beginKM << "km " << it->beginM << "m; End: " << it->endKM << " km " << it->endM << " m; "
+            qInfo() << "Most: Begin" << it->beginKM << "km " << it->beginM << "m; End: " << it->endKM << " km " << it->endM << " m; "
                      << " Abs Begin: " << it->absBegin  << "; Abs End: " << it->absEnd;
 #endif
         }
@@ -351,7 +413,31 @@ void TrackInfo::calculateAbsCoord(QVector<TrackItem> &trackItems, QVector<TrackI
             it->absBegin = getAbsCoord(km, it->beginKM, it->beginM);
             it->absEnd = getAbsCoord(km, it->endKM, it->endM);
 #ifdef debug_info
-            qDebug() << "Mov: Begin" << it->beginKM << "km " << it->beginM << "m; End: " << it->endKM << " km " << it->endM << " m; "
+            qInfo() << "Mov: Begin" << it->beginKM << "km " << it->beginM << "m; End: " << it->endKM << " km " << it->endM << " m; "
+                     << " Abs Begin: " << it->absBegin  << "; Abs End: " << it->absEnd;
+#endif
+        }
+    }
+    else if(trackItems.first().type == TrackItem::OVR)
+    {
+        for(auto it = trackItems.begin(); it != trackItems.end(); ++it)
+        {
+            it->absBegin = getAbsCoord(km, it->beginKM, it->beginM);
+            it->absEnd = getAbsCoord(km, it->endKM, it->endM);
+#ifdef debug_info
+            qInfo() << "Overpass: Begin" << it->beginKM << "km " << it->beginM << "m; End: " << it->endKM << " km " << it->endM << " m; "
+                     << " Abs Begin: " << it->absBegin  << "; Abs End: " << it->absEnd;
+#endif
+        }
+    }
+    else if(trackItems.first().type == TrackItem::TNL)
+    {
+        for(auto it = trackItems.begin(); it != trackItems.end(); ++it)
+        {
+            it->absBegin = getAbsCoord(km, it->beginKM, it->beginM);
+            it->absEnd = getAbsCoord(km, it->endKM, it->endM);
+#ifdef debug_info
+            qInfo() << "Tunnel: Begin" << it->beginKM << "km " << it->beginM << "m; End: " << it->endKM << " km " << it->endM << " m; "
                      << " Abs Begin: " << it->absBegin  << "; Abs End: " << it->absEnd;
 #endif
         }
@@ -362,7 +448,7 @@ void TrackInfo::calculateAbsCoord(QVector<TrackItem> &trackItems, QVector<TrackI
         {
             it->absBegin = getAbsCoord(km, it->beginKM, it->beginM);
 #ifdef debug_info
-             qDebug() << "Cur: Begin" << it->beginKM << "km " << it->beginM << "m;"
+             qInfo() << "Cur: Begin" << it->beginKM << "km " << it->beginM << "m;"
                      << " Abs Begin: " << it->absBegin;
 #endif
         }
@@ -374,7 +460,7 @@ void TrackInfo::calculateAbsCoord(QVector<TrackItem> &trackItems, QVector<TrackI
             it->absBegin = getAbsCoord(km, it->beginKM, it->beginM);
             it->absEnd = getAbsCoord(km, it->endKM, it->endM);
 #ifdef debug_info
-            qDebug() << "Spd: Begin" << it->beginKM << "km " << it->beginM << "m; End: " << it->endKM << " km " << it->endM << " m; "
+            qInfo() << "Spd: Begin" << it->beginKM << "km " << it->beginM << "m; End: " << it->endKM << " km " << it->endM << " m; "
                      << " Abs Begin: " << it->absBegin  << "; Abs End: " << it->absEnd << " spd: " << it->name;
 #endif
         }
@@ -385,12 +471,49 @@ void TrackInfo::calculateAbsCoord(QVector<TrackItem> &trackItems, QVector<TrackI
         {
             it->absBegin = getAbsCoord(km, it->beginKM, it->beginM);
             it->absEnd = getAbsCoord(km, it->endKM, it->endM);
-            qDebug() << "Sleeper: Begin" << it->beginKM << "km " << it->beginM << "m; End: " << it->endKM << " km " << it->endM << " m; "
-                     << " Abs Begin: " << it->absBegin  << "; Abs End: " << it->absEnd;
+#ifdef debug_info
+            qInfo() << "Sleeper: Begin" << it->beginKM << "km " << it->beginM << "m; End: " << it->endKM << " km " << it->endM << " m; "
+                     << " Abs Begin: " << it->absBegin  << "; Abs End: " << it->absEnd << "; name: " << it->name;
+#endif
+        }
+    }
+    else if(trackItems.first().type == TrackItem::BONDING)
+    {
+        for(auto it = trackItems.begin(); it != trackItems.end(); ++it)
+        {
+            it->absBegin = getAbsCoord(km, it->beginKM, it->beginM);
+            it->absEnd = getAbsCoord(km, it->endKM, it->endM);
+#ifdef debug_info
+            qInfo() << "Bonding: Begin" << it->beginKM << "km " << it->beginM << "m; End: " << it->endKM << " km " << it->endM << " m; "
+                     << " Abs Begin: " << it->absBegin  << "; Abs End: " << it->absEnd << "; numb: " << it->numb;
+#endif
+        }
+    }
+    else if(trackItems.first().type == TrackItem::RAIL)
+    {
+        for(auto it = trackItems.begin(); it != trackItems.end(); ++it)
+        {
+            it->absBegin = getAbsCoord(km, it->beginKM, it->beginM);
+            it->absEnd = getAbsCoord(km, it->endKM, it->endM);
+#ifdef debug_info
+            qInfo() << "Rail: Begin" << it->beginKM << "km " << it->beginM << "m; End: " << it->endKM << " km " << it->endM << " m; "
+                     << " Abs Begin: " << it->absBegin  << "; Abs End: " << it->absEnd << "; numb: " << it->numb;
+#endif
+        }
+    }
+    else if(trackItems.first().type == TrackItem::ISO)
+    {
+        for(auto it = trackItems.begin(); it != trackItems.end(); ++it)
+        {
+            it->absO = getAbsCoord(km, it->oKM, it->oM);
+#ifdef debug_info
+            qInfo() << "Iso: o: " << it->oKM << "km " << it->oM << "m;"
+                     << " Abs: " << it->absO;
+#endif
         }
     }
 
-    qDebug() << "Time: " << time.msecsTo(QTime::currentTime());
+    qInfo() << "Time: " << time.msecsTo(QTime::currentTime());
 }
 
 

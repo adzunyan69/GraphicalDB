@@ -10,7 +10,7 @@ void Plot::setupPlot(QCustomPlot *_plot)
 {
     if(_plot == nullptr)
     {
-        qDebug() << "Error: qcustomplot is nullptr";
+        qInfo() << "Error: qcustomplot is nullptr";
         emit error("Ошибка: указатель на qcustomplot = nullptr.");
         return;
     }
@@ -56,8 +56,11 @@ void Plot::setupPlot(QCustomPlot *_plot)
     posGraph = plot->addGraph();
     movGraph = plot->addGraph();
     mostGraph = plot->addGraph();
+    overpassGraph = plot->addGraph();
+    tunnelGraph = plot->addGraph();
     spdGraph = plot->addGraph();
     curGraph = plot->addGraph();
+    isoGraph = plot->addGraph();
 
     posGraph->setLineStyle(QCPGraph::lsNone);
     posGraph->setScatterStyle(QCPScatterStyle(QPixmap(QApplication::applicationDirPath() + "/images/train.png")));
@@ -79,7 +82,7 @@ void Plot::setReversed(bool _reversed)
 }
 void Plot::drawObjects(QMap<TrackItem::TrackItemType, QVector<TrackItem>> &itemsMap)
 {
-    qDebug() << "Drawing objects at qcustomplot";
+    qInfo() << "Drawing objects at qcustomplot";
 
     plot->clearItems();
 
@@ -89,39 +92,45 @@ void Plot::drawObjects(QMap<TrackItem::TrackItemType, QVector<TrackItem>> &items
     pchVec = itemsMap[TrackItem::PCH];
     spdVec = itemsMap[TrackItem::SPD];
     stanVec = itemsMap[TrackItem::STAN];
+    sleeperVec = itemsMap[TrackItem::SLEEPER];
+    bondingVec = itemsMap[TrackItem::BONDING];
+    railVec = itemsMap[TrackItem::RAIL];
 
-    qDebug() << "Getting kmVector";
+    qInfo() << "Getting kmVector";
     const QVector<TrackItem> &km = itemsMap[TrackItem::KM];
 
     if(km.isEmpty())
     {
-        qDebug() << "Отсутствуют километры.";
+        qInfo() << "Отсутствуют километры.";
         emit error("Отсутствует список километров - возможно, ошибка при выполнении запрсоов к БД.");
         return;
     }
 
     const TrackItem &kmMin = km.first();
     const TrackItem &kmMax = km.last();
-    qDebug() << "Min km: " << kmMin.km << "/" << kmMin.absBegin << "; Max km: " << kmMax.km << "/" << kmMax.absBegin;
+    qInfo() << "Min km: " << kmMin.km << "/" << kmMin.absBegin << "; Max km: " << kmMax.km << "/" << kmMax.absBegin;
 
 
     drawKM(km);
     drawSTR(itemsMap[TrackItem::STR]);
     drawMOV(itemsMap[TrackItem::MOV]);
     drawMOST(itemsMap[TrackItem::MOST]);
+    drawOVERPASS(itemsMap[TrackItem::OVR]);
+    drawTUNNEL(itemsMap[TrackItem::TNL]);
     drawPCH(itemsMap[TrackItem::PCH]);
     drawSTAN(itemsMap[TrackItem::STAN]);
     drawCUR(itemsMap[TrackItem::CUR]);
     drawSPD(itemsMap[TrackItem::SPD]);
     // drawSLEEPER(itemsMap[TrackItem::SLEEPER]);
-    qDebug() << "end drawing";
+    drawISO(itemsMap[TrackItem::ISO]);
+    qInfo() << "end drawing";
 
 
 }
 
 void Plot::drawKM(const QVector<TrackItem> &km)
 {
-    qDebug() << "drawKM";
+    qInfo() << "drawKM";
     QSharedPointer<QCPAxisTickerText> kmTextTicker(new QCPAxisTickerText);
 
     plot->xAxis->setTicker(kmTextTicker);
@@ -129,21 +138,28 @@ void Plot::drawKM(const QVector<TrackItem> &km)
 
     for(const TrackItem &kmItem: km)
     {
-        // qDebug() << "Current kmItem: " << kmItem.km;
+        // qInfo() << "Current kmItem: " << kmItem.km;
         QCPItemText *kmTextLabel = new QCPItemText(plot);
         kmTextLabel->position->setCoords(kmItem.absBegin + kmItem.len/2, 0.01);
         kmTextLabel->setText(QString::number(kmItem.len));
         kmTextLabel->setAntialiased(false);
 
         kmTextTicker->addTick(kmItem.absBegin, QString::number(kmItem.km));
+
+        for(int i = 0; i < kmItem.len / 100; ++i)
+        {
+            QCPItemLine *piket = new QCPItemLine(plot);
+            piket->start->setCoords(kmItem.absBegin + i * 100, -0.05);
+            piket->end->setCoords(kmItem.absBegin + i * 100, 0.0);
+        }
     }
 
-    qDebug() << "Drawing kmLine";
+    qInfo() << "Drawing kmLine";
     QCPItemStraightLine *kmLine = new QCPItemStraightLine(plot);
     kmLine->point1->setCoords(0, yKM);
     kmLine->point2->setCoords(1, yKM);
 
-    qDebug() << "Drawing posLine";
+    qInfo() << "Drawing posLine";
     posLine = new QCPItemStraightLine (plot);
     posLine->setPen(QPen(Qt::DashDotDotLine));
 }
@@ -151,13 +167,13 @@ void Plot::drawKM(const QVector<TrackItem> &km)
 
 void Plot::drawSTR(const QVector<TrackItem> &str)
 {
-    qDebug() << "Drawing STR";
+    qInfo() << "Drawing STR";
     QVector<double> strAbsCoords, strHeights;
     QVector<double> xLeft, xRight, yLeft, yRight;
 
     for(const TrackItem &strItem: str)
     {
-        // qDebug() << "Str abs: " << strItem.absBegin << "km m: " << strItem.beginKM << " / " << strItem.beginM << " numb: " << strItem.numb;
+        // qInfo() << "Str abs: " << strItem.absBegin << "km m: " << strItem.beginKM << " / " << strItem.beginM << " numb: " << strItem.numb;
         if((strItem.name == "2" && reversed == false) || (strItem.name == "1" && reversed == true))
             xLeft.push_back(strItem.absBegin);
         else if((strItem.name == "1" && reversed == false)|| (strItem.name == "2" && reversed == true))
@@ -176,7 +192,7 @@ void Plot::drawSTR(const QVector<TrackItem> &str)
 
         if(strItem.name == "2" || strItem.name == "1")
         {
-            // qDebug() << "Drawing str label";
+            // qInfo() << "Drawing str label";
             QCPItemText *strLabel = new QCPItemText(plot);
             strLabel->position->setCoords(strAbsCoords.last(), strHeights.last());
             strLabel->setPositionAlignment(Qt::AlignHCenter | Qt::AlignBottom);
@@ -189,7 +205,7 @@ void Plot::drawSTR(const QVector<TrackItem> &str)
     yLeft = QVector<double>(xLeft.size(), ySTR);
     yRight = QVector<double>(xRight.size(), ySTR);
 
-    // qDebug() << "Drawing str graphs";
+    // qInfo() << "Drawing str graphs";
 
     strLeftGraph->setLineStyle(QCPGraph::lsNone);
     strLeftGraph->setScatterStyle(QCPScatterStyle(QPixmap(QApplication::applicationDirPath() + "/images/str.png")));
@@ -205,7 +221,7 @@ void Plot::drawSTR(const QVector<TrackItem> &str)
 
 void Plot::drawMOV(const QVector<TrackItem> &mov)
 {
-    qDebug() << "Drawing mov";
+    qInfo() << "Drawing mov";
     QVector<double> x, y;
 
     y = QVector<double>(mov.size(), yMOV);
@@ -214,16 +230,16 @@ void Plot::drawMOV(const QVector<TrackItem> &mov)
     {
         double movPos = movItem.absBegin + (movItem.absEnd - movItem.absBegin) / 2;
 
-        //  qDebug() << "Drawing mov: " << movPos;
+        //  qInfo() << "Drawing mov: " << movPos;
         QCPItemText *movLabel = new QCPItemText(plot);
 
-        movLabel->position->setCoords(movPos + 4, yMOV + yMOVdiff);
+        movLabel->position->setCoords(movPos, yMOV + yMOVdiff);
         movLabel->setText(QString::number(movItem.absEnd - movItem.absBegin));
 
         x.push_back(movItem.absBegin);
     }
 
-    qDebug() << "Draing mov line";
+    qInfo() << "Draing mov line";
 
     movGraph->setLineStyle(QCPGraph::lsNone);
     movGraph->setScatterStyle(QCPScatterStyle(QPixmap(QApplication::applicationDirPath() + "/images/mov.png")));
@@ -232,7 +248,7 @@ void Plot::drawMOV(const QVector<TrackItem> &mov)
 
 void Plot::drawMOST(const QVector<TrackItem> &most)
 {
-    qDebug() << "Drawing most";
+    qInfo() << "Drawing most";
     QVector<double> x, y;
 
     y = QVector<double>(most.size(), yMOST);
@@ -246,15 +262,59 @@ void Plot::drawMOST(const QVector<TrackItem> &most)
         mostLabel->setText(QString::number(mostItem.absEnd - mostItem.absBegin));
         x.push_back(mostPos);
     }
-    qDebug() << "Drawing most graph";
+    qInfo() << "Drawing most graph";
     mostGraph->setLineStyle(QCPGraph::lsNone);
     mostGraph->setScatterStyle(QCPScatterStyle(QPixmap(QApplication::applicationDirPath() + "/images/most.png")));
     mostGraph->setData(x, y);
 }
 
+void Plot::drawOVERPASS(const QVector<TrackItem> &overpass)
+{
+    qInfo() << "Drawing overpass";
+    QVector<double> x, y;
+
+    y = QVector<double>(overpass.size(), yOVERPASS);
+    for(const TrackItem &overpassItem: overpass)
+    {
+        double overpassPos = overpassItem.absBegin + (overpassItem.absEnd - overpassItem.absBegin) / 2;
+
+        QCPItemText *overpassLabel = new QCPItemText(plot);
+
+        overpassLabel->position->setCoords(overpassPos, yOVERPASS + 0.15);
+        overpassLabel->setText(QString::number(overpassItem.absEnd - overpassItem.absBegin));
+        x.push_back(overpassPos);
+    }
+    qInfo() << "Drawing overpass graph";
+    overpassGraph->setLineStyle(QCPGraph::lsNone);
+    overpassGraph->setScatterStyle(QCPScatterStyle(QPixmap(QApplication::applicationDirPath() + "/images/overpass.png")));
+    overpassGraph->setData(x, y);
+}
+
+void Plot::drawTUNNEL(const QVector<TrackItem> &tunnel)
+{
+    qInfo() << "Drawing tunnel";
+    QVector<double> x, y;
+
+    y = QVector<double>(tunnel.size(), yTUNNEL);
+    for(const TrackItem &tunnelItem: tunnel)
+    {
+        double tunnelPos = tunnelItem.absBegin + (tunnelItem.absEnd - tunnelItem.absBegin) / 2;
+
+        QCPItemText *tunnelLabel = new QCPItemText(plot);
+
+        tunnelLabel->position->setCoords(tunnelPos, yTUNNEL + 0.15);
+        tunnelLabel->setText(QString::number(tunnelItem.absEnd - tunnelItem.absBegin));
+        x.push_back(tunnelPos);
+    }
+    qInfo() << "Drawing overpass graph";
+    tunnelGraph->setLineStyle(QCPGraph::lsNone);
+    tunnelGraph->setScatterStyle(QCPScatterStyle(QPixmap(QApplication::applicationDirPath() + "/images/tunnel.png")));
+    tunnelGraph->setData(x, y);
+}
+
 void Plot::drawPCH(const QVector<TrackItem> &pch)
 {
-    qDebug() << "Drawing PCH";
+    qInfo() << "Drawing PCH";
     QCPItemStraightLine *linePCHTop = new QCPItemStraightLine(plot);
     linePCHTop->point1->setCoords(0, yPCH + yPCHdiff);
     linePCHTop->point2->setCoords(1, yPCH + yPCHdiff);
@@ -264,7 +324,7 @@ void Plot::drawPCH(const QVector<TrackItem> &pch)
     linePCHBottom->point2->setCoords(1, yPCH - yPCHdiff);
     for(const TrackItem &pchItem: pch)
     {
-        // qDebug() << "Drawing pch " << pchItem.name;
+        // qInfo() << "Drawing pch " << pchItem.name;
         QCPItemLine *lineLeft = new QCPItemLine(plot);
 
         lineLeft->start->setCoords(pchItem.absBegin, yPCH - yPCHdiff);
@@ -288,14 +348,14 @@ void Plot::drawPCH(const QVector<TrackItem> &pch)
 
 void Plot::drawSTAN(const QVector<TrackItem> &stan)
 {
-    qDebug() << "Drawing stan";
+    qInfo() << "Drawing stan";
     QVector<double> x, y;
 
     y = QVector<double>(stan.size(), ySTAN + ySTANosDiff);
 
     for(const TrackItem &stanItem: stan)
     {
-        // qDebug() << "Drawing stan " << stanItem.name;
+        // qInfo() << "Drawing stan " << stanItem.name;
         QCPItemLine *line = new QCPItemLine(plot);
         QPen pen(Qt::black, 3, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin);
         line->setPen(pen);
@@ -323,10 +383,10 @@ void Plot::drawSTAN(const QVector<TrackItem> &stan)
 
 void Plot::drawCUR(const QVector<TrackItem> &cur)
 {
-    qDebug() << "Drawing cur";
+    qInfo() << "Drawing cur";
     if(cur.isEmpty())
     {
-        qDebug() << "Отсутствуют данные для отрисовки, пропуск.";
+        qInfo() << "Отсутствуют данные для отрисовки, пропуск.";
         return;
     }
     QVector<double> x, y;
@@ -393,7 +453,7 @@ void Plot::drawCUR(const QVector<TrackItem> &cur)
 
 void Plot::drawSPD(const QVector<TrackItem> &spd)
 {
-    qDebug() << "Drawing SPD";
+    qInfo() << "Drawing SPD";
     QVector<int> spdAbsCoords;
 
     for(auto it = spd.begin(); it != spd.end(); ++it)
@@ -445,7 +505,7 @@ void Plot::drawSPD(const QVector<TrackItem> &spd)
 
 void Plot::drawSLEEPER(const QVector<TrackItem> &sleeper)
 {
-    qDebug() << "Drawing SLEEPER";
+    qInfo() << "Drawing SLEEPER";
 
     QCPItemStraightLine *ySleeperTopLine = new QCPItemStraightLine(plot);
     ySleeperTopLine->point1->setCoords(0, ySleeper + ySleeperDiff);
@@ -466,7 +526,7 @@ void Plot::drawSLEEPER(const QVector<TrackItem> &sleeper)
     {
         if(it->absEnd <= it->absBegin)
         {
-            qDebug() << "Неверные координаты шпалы: "
+            qInfo() << "Неверные координаты шпалы: "
                      << it->absBegin << "/" << it->absEnd << "; "
                      << it->beginKM << "/" << it->beginM;
             continue;
@@ -506,6 +566,23 @@ void Plot::drawSLEEPER(const QVector<TrackItem> &sleeper)
     }
 }
 
+void Plot::drawISO(const QVector<TrackItem> &iso)
+{
+    qInfo() << "Drawing iso";
+    QVector<double> x, y;
+
+    y = QVector<double>(iso.size(), yMOST);
+    for(const TrackItem &isoItem: iso)
+    {
+        double isoPos = isoItem.absO;
+        x.push_back(isoPos);
+    }
+    qInfo() << "Drawing iso graph";
+    isoGraph->setLineStyle(QCPGraph::lsNone);
+    isoGraph->setScatterStyle(QCPScatterStyle(QPixmap(QApplication::applicationDirPath() + "/images/iso.png")));
+    isoGraph->setData(x, y);
+}
+
 void Plot::changePosition(int absPos)
 {
     if(kmVec.isEmpty())
@@ -529,12 +606,18 @@ void Plot::changePosition(int absPos)
 
     using namespace QtConcurrent;
 
-    QtConcurrent::run(this, &Plot::checkSPD, absPos);
-    QtConcurrent::run(this, &Plot::checkPCH, absPos);
-    QtConcurrent::run(this, &Plot::checkDistance, absPos);
-    //checkSPD(absPos);
-   // checkPCH(absPos);
-    //checkDistance(absPos);
+//    QtConcurrent::run(this, &Plot::checkSPD, absPos);
+//    QtConcurrent::run(this, &Plot::checkPCH, absPos);
+//    QtConcurrent::run(this, &Plot::checkDistance, absPos);
+//    QtConcurrent::run(this, &Plot::checkSleeper, absPos);
+//    QtConcurrent::run(this, &Plot::checkBonding, absPos);
+//    QtConcurrent::run(this, &Plot::checkRail, absPos);
+    checkSPD(absPos);
+    checkPCH(absPos);
+    checkDistance(absPos);
+    checkSleeper(absPos);
+    checkBonding(absPos);
+    checkRail(absPos);
 }
 
 
@@ -543,23 +626,22 @@ void Plot::changePosition(QString pos)
     if(kmVec.isEmpty())
         return;
 
+    bool isCurrentPathCoordCorrect{ false };
+    bool isCorrectKm, isCorrectM{ false };
+    int _km, _m;
 
-    bool isCorrectPathCoord;
-    int _km = pos.split(";").first().toInt(&isCorrectPathCoord);
-    if(isCorrectPathCoord == false)
-    {
-        qDebug() << "Invalid path coord: km";
-        emit error("Получена неверная координата: " + pos);
-        return;
+    auto splittedPathCoord = pos.split(';');
+    if(splittedPathCoord.size() != 2)
+        isCurrentPathCoordCorrect = false;
+    else {
+        _km = splittedPathCoord.first().toInt(&isCorrectKm);
+        _m = splittedPathCoord.at(1).toInt(&isCorrectM) / 1000;
+
+        isCurrentPathCoordCorrect = isCorrectKm && isCorrectM;
     }
 
-    int _m = pos.split(";").at(1).toInt(&isCorrectPathCoord) / 1000;
-    if(isCorrectPathCoord == false)
-    {
-        qDebug() << "Invalid path coord: m";
-        emit error("Получена неверная координата: " + pos);
+    if(isCurrentPathCoordCorrect == false)
         return;
-    }
 
     if(_km != prevKm || _m != prevM)
         changePosition(getAbsCoord(_km, _m));
@@ -629,6 +711,58 @@ void Plot::checkDistance(int absPos)
     }
 }
 
+void Plot::checkSleeper(int absPos)
+{
+    // qInfo() << "sleeper check";
+    QString sleeper;
+    for(auto it = sleeperVec.begin(); it != sleeperVec.end(); ++it)
+    {
+        if(absPos >= it->absBegin && absPos <= it->absEnd)
+            sleeper = it->name;
+
+    }
+
+    if(sleeper != currentSleeper)
+    {
+        currentSleeper = sleeper;
+        emit sleeperChanged(currentSleeper);
+    }
+}
+
+void Plot::checkBonding(int absPos)
+{
+    QString bonding;
+    for(auto it = bondingVec.begin(); it != bondingVec.end(); ++it)
+    {
+        if(absPos >= it->absBegin && absPos <= it->absEnd)
+            bonding = it->numb;
+
+    }
+
+    if(bonding != currentBonding)
+    {
+        currentBonding = bonding;
+        emit bondingChanged(currentBonding);
+    }
+}
+
+void Plot::checkRail(int absPos)
+{
+    QString rail;
+    for(auto it = railVec.begin(); it != railVec.end(); ++it)
+    {
+        if(absPos >= it->absBegin && absPos <= it->absEnd)
+            rail = it->numb;
+
+    }
+
+    if(rail != currentRail)
+    {
+        currentRail = rail;
+        emit railChanged(currentRail);
+    }
+}
+
 int Plot::getAbsCoord(int pathKm, int pathM)
 {
     int absCoord = -1;
@@ -636,7 +770,7 @@ int Plot::getAbsCoord(int pathKm, int pathM)
     {
         if(pathKm == it->km)
         {
-            // qDebug() << "Found coord: " << it->absBegin + " / " << it->km;
+            // qInfo() << "Found coord: " << it->absBegin + " / " << it->km;
             absCoord = it->absBegin + pathM;
             break;
         }

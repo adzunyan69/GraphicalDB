@@ -35,6 +35,7 @@ public:
 public:
     virtual void startUpdating() = 0;
     virtual RideInfo getRideInfo() = 0;
+    virtual QString getCurPathCoord() = 0;
 signals:
     void currentPathCoordChanged(QString pathCoord);
     void trackChanged();
@@ -64,6 +65,7 @@ public:
     void setRegistryPathAndRideInfo(QString _registryPath);
     void startUpdating() override;
     RideInfo getRideInfo() override;
+    QString getCurPathCoord() override { return currentPathCoord; }
 
 private slots:
     void updatePathCoord();
